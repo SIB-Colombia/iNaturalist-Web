@@ -1,0 +1,16 @@
+.observation {
+  display: inline-block;
+  width: 100%;
+  border-bottom: 1px solid #ddd;
+  padding: 20px 0px 20px;
+}
+.observation > .image {
+  width: 200px;
+  min-height: 10px;
+}
+.observation > .image > img {
+  width: 200px;
+}
+.observation > .name {
+  font-size: 1.5em;
+}

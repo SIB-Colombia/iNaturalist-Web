@@ -12,7 +12,7 @@ Inaturalist::Application.configure do
 
   config.eager_load = true
 
-  config.action_dispatch.x_sendfile_header = CONFIG.x_sendfile_header
+  # config.action_dispatch.x_sendfile_header = CONFIG.x_sendfile_header
 
   # If you have no front-end server that supports something like X-Sendfile,
   # just comment this out and Rails will serve the files
@@ -25,7 +25,7 @@ Inaturalist::Application.configure do
 
   # Disable Rails's static asset server
   # In production, Apache or nginx will already do this
-  config.serve_static_files = false
+  config.serve_static_files = true
 
   # Allow removal of expired assets:
   config.assets.handle_expiration = true

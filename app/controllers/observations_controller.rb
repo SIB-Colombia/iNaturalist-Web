@@ -84,6 +84,10 @@ class ObservationsController < ApplicationController
   PHOTO_SYNC_ATTRS = [:description, :species_guess, :taxon_id, :observed_on,
     :observed_on_string, :latitude, :longitude, :place_guess]
 
+  def react
+    render layout: "bootstrap"
+  end
+
   # GET /observations
   # GET /observations.xml
   def index
