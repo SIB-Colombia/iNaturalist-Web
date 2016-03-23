@@ -1,10 +1,9 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-       "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en"
-     xmlns:fb="http://www.facebook.com/2008/fbml"
-     xmlns:og="http://ogp.me/ns#">
+<!DOCTYPE html>
+<html lang="es">
   <head prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb# <% if CONFIG.facebook && CONFIG.facebook.namespace %><%= CONFIG.facebook.namespace %>: http://ogp.me/ns/fb/<%= CONFIG.facebook.namespace %>#<% end %>">
-    <meta http-equiv="content-type" content="text/html;charset=UTF-8" />
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <% if logged_in? && @provider_authorizations -%>
       <meta name="authenticators" content="<%= @provider_authorizations.map{|pa| pa.provider}.join(',') %>">
     <% end -%>
@@ -13,7 +12,6 @@
     <%= stylesheet_link_tag 'blueprint_bundle' %>
     <%= render :partial => 'shared/common_stylesheets'%>
     <%= stylesheet_link_tag "blueprint-inat" %>
-    <%= stylesheet_link_tag "blueprint-bootstrap" %>
     <%= javascript_include_tag '//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js' %>
     <%= javascript_include_tag '//ajax.googleapis.com/ajax/libs/jqueryui/1.9.1/jquery-ui.min.js' %>
     <script type="text/javascript">
@@ -44,12 +42,21 @@
     <% if !@headless && @site && @site.preferred_ios_app_id -%>
       <meta name="apple-itunes-app" content="app-id=<%= @site.preferred_ios_app_id %>">
     <% end -%>
+    <!-- Bootstrap CDN -->
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
     <%= yield :extrahead %>
     <%= yield :extracss %>
     <%= yield :extrajs %>
   </head>
 <body class="browser">
-  <div id="bodywrapper">
+  <div id="bodywrapper" class="dashboard-container">
     <% unless @headless -%>
       <% cache(User.header_cache_key_for(current_user, site: @site)) do %>
         <%= render :partial => 'shared/header' %>
@@ -71,20 +78,35 @@
         </div>
       </div>
     <% end -%>
-
-    <div id="wrapper" class="container clear">
-      <% if flash[:warning] -%>
-        <div class="notice box">
-          <% if flash[:warning_title] -%>
-            <h3><%=raw flash[:warning_title] %></h3>
-          <% end -%>
-          <p class="unstacked">
-            <%=raw flash[:warning] %>
-          </p>
+    
+    <!-- SIB Wrapper -->
+    <div class="dashboard-container">
+      <div class="dashboard-content-wrapper clearfix">
+        <!-- SIDEBAR -->
+        <%= render :partial => 'shared/sidebar', :locals => { :user => current_user } %>
+        <!-- / SIDEBAR -->
+        <div class="main-content-display">
+        <!-- CONTENT -->
+          <div class="container-fluid">
+            <!-- iNat -->
+              <% if flash[:warning] -%>
+                <div class="notice box">
+                  <% if flash[:warning_title] -%>
+                    <h3><%=raw flash[:warning_title] %></h3>
+                  <% end -%>
+                  <p class="unstacked">
+                    <%=raw flash[:warning] %>
+                  </p>
+                </div>
+              <% end -%>
+              <%= yield %>
+            <!-- iNat -->
+          </div>
+        <!-- / CONTENT -->
         </div>
-      <% end -%>
-      <%= yield %>
-    </div><!-- end wrapper -->
+      </div>
+    </div>
+    <!-- -->
     
     <div id="modal_image_box" class="modalbox" style="display:none"></div>
     <div id="comment_preview" class="modalbox" style="display: none"></div>
@@ -99,11 +121,54 @@
       setMessagesCount(<%= session[:messages_count].to_i %>)
       setTimeout(getMessagesCount, 1000)
     </script>
+    <!-- Sidebar -->
+    <script>
+      $(".bg-collapse").click(function(){
+        $(".dashboard-content-wrapper").toggleClass("collapse-sidebar");
+        $(".bg-collapse").toggleClass("collapsed-menu");
+        $(".active").toggleClass("active-menu");
+      });
+
+      $('.main-sidebar li').hover(
+        function () {
+          if (!$(this).hasClass("active-menu")) {
+            $('ul', this).fadeIn();
+          }
+        },
+        function () {
+          if (!$(this).hasClass("active-menu")) {
+            $('ul', this).fadeOut();
+          }
+        }
+      );
+
+      function docwidth() {
+        var winsize = $( window ).width();
+        var setwidth = 700;
+
+        if(winsize < setwidth) {
+          $(".dashboard-content-wrapper").addClass("collapse-sidebar");
+          $(".bg-collapse").css("display", "none");
+          $(".active").removeClass("active-menu");
+        } else if (winsize > setwidth) {
+          $(".dashboard-content-wrapper").removeClass("collapse-sidebar");
+          $(".bg-collapse").css("display", "block");
+          $(".active").addClass("active-menu");
+        }
+      }
+
+      docwidth();
+
+      $(window).resize(docwidth);
+    </script>
+    <!-- / Sidebar -->
   <% end -%>
   <script type="text/javascript">
     if (typeof(ga) != 'undefined') {
       ga('set', 'dimension1', <%=raw logged_in? ? "'true'" : "'false'" %>);
     }
   </script>
+  <!-- Include all compiled plugins (below), or include individual files as needed -->
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/js/bootstrap.min.js"></script>
 </body>
 </html>

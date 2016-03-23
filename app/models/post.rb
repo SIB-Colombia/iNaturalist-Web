@@ -40,16 +40,11 @@ class Post < ActiveRecord::Base
   scope :published, -> { where("published_at IS NOT NULL") }
   scope :unpublished, -> { where("published_at IS NULL") }
 
-  FORMATTING_SIMPLE = "simple"
-  FORMATTING_NONE = "none"
-  preference :formatting, :string, default: FORMATTING_SIMPLE
-
   ALLOWED_TAGS = %w(
     a abbr acronym b blockquote br cite code dl dt em embed h1 h2 h3 h4 h5 h6 hr i
     iframe img li object ol p param pre small strong sub sup tt ul
     table tr td th
     audio source
-    div
   )
 
   ALLOWED_ATTRIBUTES = %w(
@@ -86,10 +81,6 @@ class Post < ActiveRecord::Base
     s = self.title || ""
     s += ", by #{self.user.try(:login)}" unless options[:no_user]
     s
-  end
-
-  def to_param
-    "#{id}-#{title.parameterize}"
   end
   
   def draft?

@@ -99,11 +99,8 @@
     <p>
 
     <%=t :check_out_my_observations_at %>
-    </p>
-    
-    <p>
-    <%= link_to observations_url({user_id: current_user.login}), 
-      observations_url({user_id: current_user.login}) %>.
+    <%= link_to observations_by_login_url(current_user.login), 
+      observations_by_login_url(current_user.login) %>.
     </p>
     
     <p>

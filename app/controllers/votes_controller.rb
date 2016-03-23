@@ -24,7 +24,6 @@ class VotesController < ApplicationController
       format.html do
         redirect_to @record
       end
-      Observation.refresh_es_index
       format.json { render json: @record.as_json(methods: [:votes]) }
     end
   end
@@ -35,7 +34,6 @@ class VotesController < ApplicationController
       format.html do
         redirect_to @record
       end
-      Observation.refresh_es_index
       format.json { head :no_content }
     end
   end

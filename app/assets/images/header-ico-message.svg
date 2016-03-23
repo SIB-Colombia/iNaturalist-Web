@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="20px" height="15px" viewBox="0 0 20 15" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:sketch="http://www.bohemiancoding.com/sketch/ns">
+    <!-- Generator: Sketch 3.4 (15575) - http://www.bohemiancoding.com/sketch -->
+    <title>header-ico-message</title>
+    <desc>Created with Sketch.</desc>
+    <defs></defs>
+    <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" sketch:type="MSPage">
+        <g id="header-ico-message" sketch:type="MSLayerGroup" fill="#FEFEFE">
+            <path d="M18.125,13.75 L1.875,13.75 C1.578,13.75 1.342,13.539 1.277,13.262 L6.025,9.855 C6.29,9.634 6.326,9.24 6.105,8.975 C5.884,8.709 5.491,8.674 5.225,8.895 L1.25,11.667 L1.25,3.479 L9.6,9.855 C9.716,9.952 9.858,10 10,10 C10.142,10 10.284,9.952 10.4,9.855 L18.75,3.479 L18.75,11.577 L14.775,8.895 C14.509,8.674 14.116,8.709 13.895,8.975 C13.674,9.24 13.71,9.634 13.975,9.855 L18.738,13.182 C18.708,13.499 18.45,13.75 18.125,13.75 M1.875,1.25 L18.125,1.25 C18.464,1.25 18.735,1.52 18.746,1.855 L10,8.561 L1.254,1.855 C1.265,1.52 1.536,1.25 1.875,1.25 M18.75,0 L1.25,0 C0.559,0 0,0.559 0,1.25 L0,13.75 C0,14.441 0.559,15 1.25,15 L18.75,15 C19.441,15 20,14.441 20,13.75 L20,1.25 C20,0.559 19.441,0 18.75,0" id="Page-1" sketch:type="MSShapeGroup"></path>
+        </g>
+    </g>
+</svg>

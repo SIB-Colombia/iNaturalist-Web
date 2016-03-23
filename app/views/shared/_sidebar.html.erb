@@ -1,0 +1,77 @@
+<aside class="main-sidebar">
+  <ul class="dashboard-menu">
+    <% if logged_in? && current_user.id == user.id -%>
+    <li><%= link_to t(:dashboard), home_path, :class => "bg-dashboard #{'active' if current_page?(:controller => "users", :action => "dashboard")}" %></li>
+    <% end -%>
+    <li><a href="#" class="bg-notificaciones">Notificaciones</a></li>
+    <li><a href="#" class="bg-mensajes">Mensajes</a></li>
+    <!--<li class="active active-menu">-->
+    <li>
+    <%= link_to t(:observations), observations_by_login_path(user.login), 
+      :id => "observations_link", 
+:class => "bg-observaciones #{'active' if current_page?(:controller => :observations, :action => :by_login)}" %>
+      <ul>
+        <li><a href="#">Nueva</a></li>
+        <li><a href="#">Importar</a></li>
+        <li><a href="#">Ver todas</a></li>
+      </ul>
+    </li>
+    <li><%= link_to t(:calendar), calendar_path(user.login), 
+      :id => "calendar_link", 
+      :class => "bg-calendario #{'active' if controller.is_a?(CalendarsController)}" %></li>
+    <li><%= link_to t(:favorites), faves_by_login_path(user.login), :id => "votes_link",
+      :class => "bg-favoritos #{'active' if current_page?(:controller => :votes, :action => :by_login)}" %></li>
+    <li>
+      <%= link_to t(:lists), lists_by_login_path(user.login), :id => "lists_link",
+      :class => "bg-listas #{'active' if current_page?(:controller => :lists, :action => :by_login)}" %>
+      <ul>
+        <li><a href="#">Nueva lista</a></li>
+        <li><a href="#">Ver todas</a></li>
+      </ul>
+    </li>
+    <li>
+      <%= link_to t(:journal), journal_by_login_path(:login => user.login), 
+      :id => "journal_link",
+      :class => "bg-diario #{'active' if request.fullpath =~ /\/journal\//}" %>
+      <ul>
+        <li><a href="#">Nueva entrada</a></li>
+        <li><a href="#">Ver todas</a></li>
+      </ul>
+    </li>
+    <li><%= link_to t(:ids), identifications_by_login_path(:login => user.login), 
+      :id => "identifications_link",
+      :class => "bg-identificaciones #{'active' if current_page?(:controller => :identifications, :action => :by_login)}" %></li>
+    <li>
+      <%= link_to t(:projects), projects_by_login_path(:login => user.login), 
+      :id => "projects_link",
+      :class => "bg-proyectos #{'active' if current_page?(:controller => :projects, :action => :by_login)}" %>
+      <ul>
+        <li><a href="#">Nuevo</a></li>
+        <li><a href="#">Ver todos</a></li>
+        <li><a href="#">Mis proyectos</a></li>
+        <li><a href="#">Invitaciones</a></li>
+      </ul>
+    </li>
+    <li><%= link_to t(:profile), person_by_login_path(:login => user.login), 
+      :id => "profile_link",
+      :class => "bg-perfil #{'active' if current_page?(:controller => :users, :action => :show)}" %></li>
+    <li><a href="#" class="bg-ajustes">Ajustes de cuenta</a></li>
+    <li><a href="#" class="bg-suscripciones">Suscripciones</a>
+      <ul>
+        <li><a href="#">Assessment sections</a></li>
+        <li><a href="#">Flags</a></li>
+        <li><a href="#">Listed taxa</a></li>
+        <li><a href="#">Observations</a></li>
+        <li><a href="#">Observation fields</a></li>
+        <li><a href="#">Places</a></li>
+        <li><a href="#">Posts</a></li>
+        <li><a href="#">Projects</a></li>
+        <li><a href="#">Taxa</a></li>
+        <li><a href="#">Taxon changes</a></li>
+        <li><a href="#">Users</a></li>
+      </ul>
+    </li>
+    <li><a href="#" class="bg-sesion">Cerrar sesión</a></li>
+    <li><a href="#" class="bg-collapse">Colapsar menú</a></li>
+  </ul>
+</aside>

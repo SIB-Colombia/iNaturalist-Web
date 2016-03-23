@@ -18,10 +18,6 @@ class PlacesController < ApplicationController
   cache_sweeper :place_sweeper, :only => [:update, :destroy, :merge]
 
   before_filter :allow_external_iframes, only: [:guide_widget, :cached_guide]
-
-  protect_from_forgery unless: -> {
-    request.parameters[:action] == "autocomplete" && request.format.json? }
-
   
   ALLOWED_SHOW_PARTIALS = %w(autocomplete_item)
   
@@ -151,7 +147,7 @@ class PlacesController < ApplicationController
   
   def create
     if params[:woeid]
-      @place = Place.import_by_woeid(params[:woeid], user: current_user)
+      @place = Place.import_by_woeid(params[:woeid])
     else
       @place = Place.new(params[:place])
       @place.user = current_user
@@ -183,12 +179,6 @@ class PlacesController < ApplicationController
   end
   
   def edit
-    # Only the admin should be able to edit places with admin_level
-    unless @place.admin_level.nil? or current_user.is_admin?
-      redirect_to place_path(@place)
-      return
-    end
-    
     r = Place.connection.execute("SELECT st_npoints(geom) from place_geometries where place_id = #{@place.id}")
     @npoints = r[0]['st_npoints'].to_i unless r.num_tuples == 0
   end
@@ -263,7 +253,6 @@ class PlacesController < ApplicationController
     @q = params[:q] || params[:term] || params[:item]
     @q = sanitize_query(@q.to_s.sanitize_encoding)
     site_place = @site.place if @site
-    params[:per_page] ||= 30
     if @q.blank?
       scope = if site_place
         Place.where(site_place.child_conditions)
@@ -271,7 +260,7 @@ class PlacesController < ApplicationController
         Place.where("place_type = ?", Place::CONTINENT).order("updated_at desc")
       end
       scope = scope.with_geom if params[:with_geom]
-      @places = scope.includes(:place_geometry_without_geom).limit(params[:per_page]).
+      @places = scope.includes(:place_geometry_without_geom).limit(30).
         sort_by{|p| p.bbox_area || 0}.reverse
     else
       # search both the autocomplete and normal field
@@ -286,8 +275,7 @@ class PlacesController < ApplicationController
       @places = Place.elastic_paginate(
         where: search_wheres,
         fields: [ :id ],
-        sort: { bbox_area: "desc" },
-        per_page: params[:per_page])
+        sort: { bbox_area: "desc" })
       Place.preload_associations(@places, :place_geometry_without_geom)
     end
 
@@ -299,8 +287,7 @@ class PlacesController < ApplicationController
         @places.each_with_index do |place, i|
           @places[i].html = view_context.render_in_format(:html, :partial => 'places/autocomplete_item', :object => place)
         end
-        render json: @places.to_json(methods: [:html, :kml_url]),
-          callback: params[:callback]
+        render :json => @places.to_json(:methods => [:html, :kml_url])
       end
     end
   end

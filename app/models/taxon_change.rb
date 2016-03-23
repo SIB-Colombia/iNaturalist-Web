@@ -114,11 +114,7 @@ class TaxonChange < ActiveRecord::Base
   # For all records with a taxon association affected by this change, update the record if 
   # possible / desired by its owner, or generate an update for the owner notifying them of 
   # the change
-  def commit_records( options = {} )
-    unless valid?
-      Rails.logger.error "[ERROR #{Time.now}] Failed to commit records for #{self}: #{errors.full_messages.to_sentence}"
-      return
-    end
+  def commit_records
     return if input_taxa.blank?
     Rails.logger.info "[INFO #{Time.now}] starting commit_records for #{self}"
     notified_user_ids = []
@@ -127,9 +123,9 @@ class TaxonChange < ActiveRecord::Base
       Taxon.reflections.detect{|k,v| k.to_s == a}
     end
     has_many_reflections.each do |k, reflection|
-      reflection.klass.where("#{reflection.foreign_key} IN (?)", input_taxa.to_a.compact.map(&:id)).find_each do |record|
+      reflection.klass.where("#{reflection.foreign_key} IN (?)", input_taxa).find_each do |record|
         record_has_user = record.respond_to?(:user) && record.user
-        if !options[:skip_updates] && record_has_user && !notified_user_ids.include?(record.user.id)
+        if record_has_user && !notified_user_ids.include?(record.user.id)
           Update.create(
             :resource => self,
             :notifier => self,

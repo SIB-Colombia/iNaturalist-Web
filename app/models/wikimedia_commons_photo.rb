@@ -94,8 +94,7 @@ class WikimediaCommonsPhoto < Photo
 
     license = api_response.search('.licensetpl_short').inner_text.to_s.downcase
     license_code = license.gsub(/\s/, '-')
-    photo.license = if (license.include? "public domain") || (license.include? "pd") ||
-                       (license.include? "cc0") || (license.include? "no restrictions")
+    photo.license = if (license.include? "public domain") || (license.include? "pd") || (license.include? "cc0")
       Photo::PD
     elsif license_code.include? "cc-by-nc-sa"
       Photo::CC_BY_NC_SA

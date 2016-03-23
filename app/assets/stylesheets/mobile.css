@@ -1,6 +1,6 @@
 body {line-height: 1.4 !important; font-size: 80%;}
 body.mobile,
-p,.p,h1,h2,h3,h4,h5,h6,.readable{font-family:"Trebuchet MS",Arial,sans-serif;font-weight:bold;}
+p,.p,h1,h2,h3,h4,h5,h6,.readable{font-weight:bold;}
 body.mobile #wrapper,
 body.mobile #header,
 body.mobile #footer{width:auto;}

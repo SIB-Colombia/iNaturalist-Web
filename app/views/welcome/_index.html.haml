@@ -24,7 +24,7 @@
       .container.container-fixed
         .row
           .col-xs-5.col-sm-5.col-md-5.col-lg-4.col-xl-4.col-xs-offset-6.col-sm-offset-6.col-md-offset-6.col-lg-offset-7
-            .herobox
+            -# .herobox
               .herotext
                 .staticon
                 %h1=t 'views.welcome.index.connect_with_nature'
@@ -41,7 +41,7 @@
         .row
           .col-xs-6.col-sm-6.col-md-6.col-lg-7.col-xs-7
           .col-xs-5.col-sm-5.col-md-5.col-lg-4.col-xl-4
-            .herobox
+            -# .herobox
               = link_to observations_path, :class => "herotext" do
                 .row
                   .col-xs-4
@@ -63,7 +63,7 @@
         .row
           .col-xs-6.col-sm-6.col-md-6.col-lg-7.col-xs-7
           .col-xs-5.col-sm-5.col-md-5.col-lg-4.col-xl-4
-            .herobox
+            -# .herobox
               = link_to taxa_path, :class => "herotext" do
                 .row
                   .col-xs-4
@@ -85,7 +85,7 @@
         .row
           .col-xs-6.col-sm-6.col-md-6.col-lg-7.col-xs-7
           .col-xs-5.col-sm-5.col-md-5.col-lg-4.col-xl-4
-            .herobox
+            -# .herobox
               = link_to people_path, :class => "herotext" do
                 .row
                   .col-xs-4
@@ -102,7 +102,228 @@
                 = link_to people_path, :class => "morelink explorelink" do
                   = t(:meet)
                   %i.icon-arrow-right
-  #how.homesection
+  / views/welcome/_index.html.haml
+  -# Como funciona
+  .section
+    .container
+      .row.section-sm
+        .col-sm-12
+          %h1.align-center ¿Como funciona?
+    .container-slim
+      .row.align-center
+        .col-sm-4
+          %img{:alt => "", :src => image_path("ph-ico-1.svg")}/
+        .col-sm-4
+          %img{:alt => "", :src => image_path("ph-ico-2.svg")}/
+        .col-sm-4
+          %img{:alt => "", :src => image_path("ph-ico-3.svg")}/
+  -# / Como funciona
+  -# Observaciones recientes
+  .home-recientes.bg-light-grey.row
+    .align-center.bg-blue.section-sm.observaciones-recientes
+      %h3 Observaciones recientes
+    .blue-dwn-arrow-block
+    .section-sm
+      .container
+        .row
+          .col-sm-12.align-right
+            .display-options
+              Cuadrícula
+    / 
+    .container
+      .grid-view
+        .row
+          .col-sm-3
+            .card-view-cont
+              .image-block
+                %img.img-full-responsive{:alt => "", :src => image_path("ph-item-image.jpg")}
+                  %a.zoom-item{:href => "#"}
+                  %a.user-profile-img{:href => "#"}
+                    %img.img-responsive{:alt => "", :src => image_path("ph-user.jpg")}
+                  .image-bar.align-right
+                    %a.image-bar-ico
+                      %img{:alt => "", :src => image_path("ico-mag-check.svg")}/
+                    %a.image-bar-ico
+                      %img{:alt => "", :src => image_path("ico-photo-cam.svg")}/
+                    %a.image-bar-ico
+                      %img{:alt => "", :src => image_path("ico-comment.svg")}/
+              .card-description
+                %h2 Lorem ipsum dolor sit amet
+                %p Lorem ipsum dolor
+          .col-sm-3
+            .card-view-cont
+              .image-block
+                %img.img-full-responsive{:alt => "", :src => image_path("ph-item-image.jpg")}
+                  %a.zoom-item{:href => "#"}
+                  %a.user-profile-img{:href => "#"}
+                    %img.img-responsive{:alt => "", :src => image_path("ph-user.jpg")}
+                  .image-bar.align-right
+                    %a.image-bar-ico
+                      %img{:alt => "", :src => image_path("ico-mag-check.svg")}/
+                    %a.image-bar-ico
+                      %img{:alt => "", :src => image_path("ico-photo-cam.svg")}/
+                    %a.image-bar-ico
+                      %img{:alt => "", :src => image_path("ico-comment.svg")}/
+              .card-description
+                %h2 Lorem ipsum dolor sit amet
+                %p Lorem ipsum dolor
+          .col-sm-3
+            .card-view-cont
+              .image-block
+                %img.img-full-responsive{:alt => "", :src => image_path("ph-item-image.jpg")}
+                  %a.zoom-item{:href => "#"}
+                  %a.user-profile-img{:href => "#"}
+                    %img.img-responsive{:alt => "", :src => image_path("ph-user.jpg")}
+                  .image-bar.align-right
+                    %a.image-bar-ico
+                      %img{:alt => "", :src => image_path("ico-mag-check.svg")}/
+                    %a.image-bar-ico
+                      %img{:alt => "", :src => image_path("ico-photo-cam.svg")}/
+                    %a.image-bar-ico
+                      %img{:alt => "", :src => image_path("ico-comment.svg")}/
+              .card-description
+                %h2 Lorem ipsum dolor sit amet
+                %p Lorem ipsum dolor
+          .col-sm-3
+            .card-view-cont
+              .image-block
+                %img.img-full-responsive{:alt => "", :src => image_path("ph-item-image.jpg")}
+                  %a.zoom-item{:href => "#"}
+                  %a.user-profile-img{:href => "#"}
+                    %img.img-responsive{:alt => "", :src => image_path("ph-user.jpg")}
+                  .image-bar.align-right
+                    %a.image-bar-ico
+                      %img{:alt => "", :src => image_path("ico-mag-check.svg")}/
+                    %a.image-bar-ico
+                      %img{:alt => "", :src => image_path("ico-photo-cam.svg")}/
+                    %a.image-bar-ico
+                      %img{:alt => "", :src => image_path("ico-comment.svg")}/
+              .card-description
+                %h2 Lorem ipsum dolor sit amet
+                %p Lorem ipsum dolor
+        .row
+          .col-sm-3
+            .card-view-cont
+              .image-block
+                %img.img-full-responsive{:alt => "", :src => image_path("ph-item-image.jpg")}
+                  %a.zoom-item{:href => "#"}
+                  %a.user-profile-img{:href => "#"}
+                    %img.img-responsive{:alt => "", :src => image_path("ph-user.jpg")}
+                  .image-bar.align-right
+                    %a.image-bar-ico
+                      %img{:alt => "", :src => image_path("ico-mag-check.svg")}/
+                    %a.image-bar-ico
+                      %img{:alt => "", :src => image_path("ico-photo-cam.svg")}/
+                    %a.image-bar-ico
+                      %img{:alt => "", :src => image_path("ico-comment.svg")}/
+              .card-description
+                %h2 Lorem ipsum dolor sit amet
+                %p Lorem ipsum dolor
+          .col-sm-3
+            .card-view-cont
+              .image-block
+                %img.img-full-responsive{:alt => "", :src => image_path("ph-item-image.jpg")}
+                  %a.zoom-item{:href => "#"}
+                  %a.user-profile-img{:href => "#"}
+                    %img.img-responsive{:alt => "", :src => image_path("ph-user.jpg")}
+                  .image-bar.align-right
+                    %a.image-bar-ico
+                      %img{:alt => "", :src => image_path("ico-mag-check.svg")}/
+                    %a.image-bar-ico
+                      %img{:alt => "", :src => image_path("ico-photo-cam.svg")}/
+                    %a.image-bar-ico
+                      %img{:alt => "", :src => image_path("ico-comment.svg")}/
+              .card-description
+                %h2 Lorem ipsum dolor sit amet
+                %p Lorem ipsum dolor
+          .col-sm-3
+            .card-view-cont
+              .image-block
+                %img.img-full-responsive{:alt => "", :src => image_path("ph-item-image.jpg")}
+                  %a.zoom-item{:href => "#"}
+                  %a.user-profile-img{:href => "#"}
+                    %img.img-responsive{:alt => "", :src => image_path("ph-user.jpg")}
+                  .image-bar.align-right
+                    %a.image-bar-ico
+                      %img{:alt => "", :src => image_path("ico-mag-check.svg")}/
+                    %a.image-bar-ico
+                      %img{:alt => "", :src => image_path("ico-photo-cam.svg")}/
+                    %a.image-bar-ico
+                      %img{:alt => "", :src => image_path("ico-comment.svg")}/
+              .card-description
+                %h2 Lorem ipsum dolor sit amet
+                %p Lorem ipsum dolor
+          .col-sm-3
+            .card-view-cont
+              .image-block
+                %img.img-full-responsive{:alt => "", :src => image_path("ph-item-image.jpg")}
+                  %a.zoom-item{:href => "#"}
+                  %a.user-profile-img{:href => "#"}
+                    %img.img-responsive{:alt => "", :src => image_path("ph-user.jpg")}
+                  .image-bar.align-right
+                    %a.image-bar-ico
+                      %img{:alt => "", :src => image_path("ico-mag-check.svg")}/
+                    %a.image-bar-ico
+                      %img{:alt => "", :src => image_path("ico-photo-cam.svg")}/
+                    %a.image-bar-ico
+                      %img{:alt => "", :src => image_path("ico-comment.svg")}/
+              .card-description
+                %h2 Lorem ipsum dolor sit amet
+                %p Lorem ipsum dolor
+        .row
+          .col-sm-12
+            .home-view-more.align-center
+              -# %a.read-more-home{:href => "#"} Ver más
+              = link_to observations_path, :class => "read-more-home" do
+                = t(:read_more)
+  -# / Observaciones recientes
+  
+  -# Descubre tu pais
+  .row.home-features-area.bg-blue
+    .container-slim.align-center
+      .row
+        .col-sm-4
+          %img{:alt => "", :src => image_path("ico-descubre.svg")}
+            %p
+              Descubre
+              %br tu país
+        .col-sm-4
+          %img{:alt => "", :src => image_path("ico-aprende.svg")}
+            %p
+              Aprende
+              %br sobre la vida
+        .col-sm-4
+          %img{:alt => "", :src => image_path("ico-comparte.svg")}
+            %p
+              Comparte tus
+              %br observaciones
+  -# / Descubre tu pais
+  
+  -# App links
+  
+  .app-area.bg-dark-blue.align-center.row
+    .container
+      .row
+        .col-sm-12
+          .register-block.container-slimer
+            .row.title-row
+              .col-sm-12
+                %h1.register-block-title ¿Qué esperas?
+            .row
+              .align-center.register-bottom
+                -# %a.read-more-home{:href => "#"} Regístrate
+                = link_to signup_path, :class => "read-more-home" do
+                  = t(:sign_up)
+          %p
+            %img{:alt => "", :src => image_path("ico-devices.png")}/
+          %h3.dwn-app Descarga la aplicación y comienza a descubrir
+          .app-download
+            %img{:alt => "", :src => image_path("google-play.png")}
+              %img{:alt => "", :src => image_path("app-store.png")}/
+  
+  -# / App links
+  
+  -# #how.homesection
     .row
       .col-xs-12
         %h1=t 'views.welcome.index.how_it_works'
@@ -126,7 +347,7 @@
             #how-discuss.col-xs-4
               %label 3
               %p=t 'views.welcome.index.discuss_your_findings'
-  #science.homesection.fixed-on-fluid
+  -# #science.homesection.fixed-on-fluid
     .row.backgroundrow
       .col-xs-6.bleedcol.col-xs-offset-6
         .img
@@ -140,7 +361,7 @@
                 %p
                   %span=t 'views.welcome.index.science_desc_html'
 
-  #value.homesection
+  -# #value.homesection
     .row
       .col-xs-12
         %h1=t 'views.welcome.index.nature_at_your_fingertips'
@@ -180,7 +401,7 @@
             .col-xs-4.row
               %h2=t 'views.welcome.index.run_a_bioblitz'
               %p=t 'views.welcome.index.hold_an_event'
-  #mobile.homesection.fixed-on-fluid
+  -# #mobile.homesection.fixed-on-fluid
     .row.backgroundrow
       .col-xs-6
         &nbsp;
@@ -195,12 +416,12 @@
                 %h1=t 'views.welcome.index.works_on_all_your_devices'
                 %p=t 'views.welcome.index.install_our_mobile_apps'
                 = link_to "https://play.google.com/store/apps/details?id=org.inaturalist.android" do
-                  = image_tag "http://static.inaturalist.org/wiki_page_attachments/412-original.png", alt: "Android app on Google Play", class: "store_badge"
+                  = image_tag "https://developer.android.com/images/brand/en_app_rgb_wo_45.png", alt: "Android app on Google Play" 
                 = link_to "https://itunes.apple.com/us/app/inaturalist/id421397028?mt=8" do
-                  = image_tag "http://static.inaturalist.org/wiki_page_attachments/414-original.png", alt: "iPhone app in the Apple App Store", class: "store_badge"
+                  = image_tag "http://static.inaturalist.org/wiki_page_attachments/235-original.png", alt: "iPhone app in the Apple App Store" 
               .col-xs-6.col-xs-offset-1.centered
                 %embed{src: image_path("homepage-devices.svg")}
-  #who.homesection
+  -# #who.homesection
     .row
       .col-xs-12
         %h1=t 'views.welcome.index.who_uses_site_name', site_name: SITE_NAME
@@ -210,7 +431,7 @@
               #who-carousel.carousel.slide{data: {ride: :carousel, interval: 7000}}
                 %ol.carousel-indicators
                 .carousel-inner{role: "listbox"}
-  #call.homesection
+  -# #call.homesection
     .row
       .col-xs-12.row
         .container.container-fixed

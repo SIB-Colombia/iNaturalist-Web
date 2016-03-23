@@ -1,5 +1,6 @@
 - content_for :title do
   = @title = "#{@flow_task.type.to_s.underscore.humanize.capitalize.gsub(/flow/, '')} #{@flow_task.id}"
+%p.current-file views/flow_tasks/show.html.haml
 %h1
   = @title
 

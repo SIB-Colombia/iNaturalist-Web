@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="17px" height="20px" viewBox="0 0 17 20" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:sketch="http://www.bohemiancoding.com/sketch/ns">
+    <!-- Generator: Sketch 3.4 (15575) - http://www.bohemiancoding.com/sketch -->
+    <title>ico-dsh-perfil</title>
+    <desc>Created with Sketch.</desc>
+    <defs>
+        <path id="path-1" d="M0,0 L16.25,0 L16.25,20 L0,20"></path>
+    </defs>
+    <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" sketch:type="MSPage">
+        <g id="ico-dsh-perfil" sketch:type="MSLayerGroup">
+            <mask id="mask-2" sketch:name="Clip 2" fill="white">
+                <use xlink:href="#path-1"></use>
+            </mask>
+            <g id="Clip-2"></g>
+            <path d="M15.7043,14.4124 C14.4963,12.8334 12.9383,12.0164 10.3043,11.7534 C9.8293,11.6584 9.4713,11.2374 9.4713,10.7374 C9.4713,10.3704 10.6453,9.2744 10.6373,9.2664 C11.8493,8.0124 12.5003,5.9744 12.5003,4.4084 C12.5003,1.9754 10.5423,0.0004 8.1243,0.0004 C5.7093,0.0004 3.7503,1.9754 3.7503,4.4084 C3.7503,5.9834 4.3833,8.0334 5.6083,9.2874 C5.6083,9.2874 6.7783,10.3704 6.7783,10.7374 C6.7783,11.2664 6.3793,11.7084 5.8623,11.7704 C3.2833,12.0414 1.7413,12.8544 0.5463,14.4124 C0.2003,14.8624 0.0123,15.7664 0.0003,16.2494 C0.0043,16.3754 0.0003,18.3334 0.0003,18.3334 C0.0003,19.2534 0.7453,20.0004 1.6663,20.0004 L14.5833,20.0004 C15.5043,20.0004 16.2503,19.2534 16.2503,18.3334 C16.2503,18.3334 16.2463,16.3754 16.2503,16.2494 C16.2373,15.7664 16.0503,14.8624 15.7043,14.4124" id="Fill-1" fill="#FEFEFE" sketch:type="MSShapeGroup" mask="url(#mask-2)"></path>
+        </g>
+    </g>
+</svg>

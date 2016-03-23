@@ -1,10 +1,19 @@
 - site = @site || CONFIG
+.pre-header.bootstrap
+  .container-fluid
+    .row
+      .col-sm-7 
+        /  views/shared/_header
+      .col-sm-5.align-right Hello World!
 #header.clear
   %ul#logonav
     %li.navtab
-      - if @site && !@site.custom_logo.blank?
+      %a.logolink.innertab{:href => "/", :title => "#{site.try(:name) || SITE_NAME}"}
+        %img{src: image_path("inat-logo.svg")}
+        -# %img{:src => "assets/inat-logo.svg"}
+      -# if @site && !@site.custom_logo.blank?
         =raw @site.custom_logo
-      - else
+      -# else
         %a.logolink.innertab{:href => "/", :title => "#{site.try(:name) || SITE_NAME}"}
           = image_tag @site && @site.logo? ? @site.logo.url : CONFIG.logo, :alt => SITE_NAME
   %ul#mainnav.navtabs

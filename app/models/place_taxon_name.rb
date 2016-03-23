@@ -20,8 +20,8 @@ class PlaceTaxonName < ActiveRecord::Base
     mapping = options[:mapping] || {
       Japanese: [:Japan],
       German: [:Germany, :Austria],
-      "Chinese Traditional" => ['Hong Kong', :Taiwan],
-      "Chinese Simplified" => [:China]
+      chinese_traditional: ['Hong Kong', :Taiwan],
+      chinese_simplified: [:China]
     }
     mapping.each do |lexicon, country_names|
       countries = Place.where(admin_level: Place::COUNTRY_LEVEL, name: country_names).to_a

@@ -56,20 +56,14 @@
 .ui-autocomplete .ac-result.active {
   background: #F2F2F2;
 }
-.ac-result .ac-label {
+.ui-autocomplete .ac-label {
   padding: 7px;
   line-height: 16px;
-}
-.ac-result.taxon .ac-label {
   display: inline-block;
   width: 258px;
 }
+
 .ui-autocomplete .identification .ac-label {
-  display: inline-block;
-  width: 450px;
-}
-.ui-autocomplete .user .ac-label {
-  display: inline-block;
   width: 450px;
 }
 .ui-autocomplete .ac-message .ac-label {
@@ -80,7 +74,7 @@
 .ui-autocomplete .ac-placeholder {
   font-weight: bold;
 }
-.ui-autocomplete .ac-label .title, .ui-autocomplete .ac-label .chooseritem {
+.ui-autocomplete .ac-label .title {
   font-size: 1.1em;
   display: block;
 }
@@ -122,17 +116,4 @@
 .ac-select-thumb i {
   font-size: 24px;
   vertical-align: middle;
-}
-.ac-result.place .ac-label {
-  max-width: 400px;
-}
-.ac-result.place .title {
-  float: left;
-  margin-right: 8px;
-}
-.ac-result.place .type {
-  float: left;
-  font-size: 0.9em;
-  text-transform: uppercase;
-  color: rgba(0, 0, 0, .5);
 }

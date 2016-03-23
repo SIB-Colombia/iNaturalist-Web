@@ -10,6 +10,7 @@
         chosen: "#{ @user ? @user.login : nil }"
       });
     });
+%p.current-file views/flags/global_index.html.haml
 #flags
   .right.inline.smallbuttons.buttonrow
     = form_tag(flags_path, method: "get") do

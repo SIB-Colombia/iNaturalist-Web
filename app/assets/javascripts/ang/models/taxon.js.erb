@@ -7,7 +7,7 @@ iNatModels.Taxon = function( attrs ) {
   });
 };
 
-iNatModels.Taxon.ICONIC_TAXA = <%= Taxon::ICONIC_TAXA.sort.to_json(only: [:id, :name, :rank]) %>;
+iNatModels.Taxon.ICONIC_TAXA = <%= Taxon::ICONIC_TAXA.to_json(only: [:id, :name, :rank]) %>;
 
 iNatModels.Taxon.prototype.iconicTaxonName = function( ) {
   var that = this
@@ -23,13 +23,6 @@ iNatModels.Taxon.prototype.iconicTaxonName = function( ) {
 
 iNatModels.Taxon.prototype.photo = function( ) {
   return this.default_photo ? this.default_photo.medium_url : this.default_photo_url;
-};
-
-iNatModels.Taxon.prototype.photoTag = function( ) {
-  if( this.default_photo ) {
-    return "<img src='"+ this.default_photo.square_url +"'/>";
-  }
-  return "<i class='icon icon-iconic-" + this.iconicTaxonName( ).toLowerCase( ) + "'/>";
 };
 
 iNatModels.Taxon.prototype.photoLicenseShort = function( ) {
@@ -99,30 +92,4 @@ iNatModels.Taxon.prototype.conservationStatus = function( ) {
       this.conservationStatusName = null;
   }
   return this.conservationStatusName;
-};
-
-iNatModels.Taxon.prototype.preferredCommonName = function( options ) {
-  options = options || { };
-  options.locale = ( options.locale || "en" ).split( "-" )[0];
-  var nameInLocale;
-  var nameInPlace;
-  var nameInAncestorPlace;
-  _.each( this.names, function( n ) {
-    if( options.preferredPlace && n.place_taxon_names ) {
-      if( _.find( n.place_taxon_names, function( ptn ) {
-          return ptn.place_id === options.preferredPlace.id; })) {
-        nameInPlace = n.name;
-      } else if( _.find( n.place_taxon_names, function( ptn ) {
-          return _.contains( options.preferredPlace.ancestor_place_ids, ptn.place_id ); })) {
-        nameInAncestorPlace = n.name;
-      }
-    }
-    if( !nameInLocale && n.locale === options.locale ) { nameInLocale = n.name; }
-  });
-  nameInLocale = nameInPlace || nameInAncestorPlace || nameInLocale;
-  if( options.defaultToEnglish === true &&
-      !nameInLocale && options.locale != "en" ) {
-    return this.preferredCommonName( _.extend( { }, options, { locale: "en" } ) );
-  }
-  return nameInLocale;
 };

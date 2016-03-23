@@ -16,9 +16,6 @@
   min-height: 450px;
   display: inline-block;
 }
-#results > .container {
-  height: 0px;
-}
 #view-controls {
   position: absolute;
   z-index: 2;
@@ -351,7 +348,6 @@ inat-taxon.split-taxon .icon {display: none;}
 
 #filter-container .fa-sliders {
   font-size: 120%;
-  margin-right: 5px;
 }
 #filter-container .fa-sliders:before {
   top: 1px;
@@ -362,14 +358,10 @@ inat-taxon.split-taxon .icon {display: none;}
   width: 900px;
 }
 #filters .dropdown-menu { background-color: #eee; padding: 0px;}
-.primary-filters .ac-chooser { display: inline-block; }
+#filters .ac-chooser { display: inline-block; }
 .bootstrap .primary-filters .form-control {width: 250px;}
 .primary-filters > span { margin: 0 5px;}
 #filter-container { margin-left: 10px; }
-#place-name-input input { margin-left: 4px; }
-#stats-container .col-xs-4 {
-  overflow: hidden;
-}
 #stats-container,
 #stats-container .statcol {
   height: 75px;
@@ -597,6 +589,9 @@ inat-taxon { white-space: nowrap; }
   outline: none;
 }
 #filters .iconic-taxon.last {margin-right: 0;}
+.bootstrap #filters .radio label, .bootstrap #filters .checkbox label {
+  text-transform: lowercase;
+}
 #filters-body {
   padding: 10px 0px 15px;
 }
@@ -921,13 +916,8 @@ inat-taxon { white-space: nowrap; }
   padding-left: 5px;
   color: #ddd;
   background: #fff;
-  z-index: 2;
 }
-input.filter-changed + .searchclear.glyphicon {
-  background: none;
-  color: #bbb;
-}
-.searchclear.glyphicon:hover, input.filter-changed + .searchclear.glyphicon:hover {
+.searchclear.glyphicon:hover {
   color: #666;
   cursor: pointer;
 }
@@ -1003,7 +993,6 @@ input.filter-changed + .searchclear.glyphicon {
 #filters-observation-fields .observation-field {
   background-color: #999;
   padding: 5px 28px 5px 5px;
-  margin-right: 10px;
   position: relative;
 }
 #filters-observation-fields .observation-field button {
@@ -1015,48 +1004,4 @@ input.filter-changed + .searchclear.glyphicon {
 }
 #filters-observation-fields .observation-field button:hover {
   background-color: #bbb;
-}
-.pages {
-  text-align: center;
-}
-#obs .pages {
-  padding: 0;
-  height: 45px;
-}
-#obs .pages ul {
-  width: 100%;
-  margin: 0 0 -5px 0;
-  height: 45px;
-  line-height: 45px;
-}
-#obs .pages li {
-  width: 50%;
-  display: inline-block;
-  text-align: center;
-  float: left;
-  background: #efefef;
-}
-#obs .pages ul a {
-  border: 0;
-  padding: 0;
-  background-color: inherit;
-  color: #333;
-  line-height: 45px;
-  width: 100%;
-}
-#obs .pages a:hover {
-  opacity: 1;
-}
-#obs .pages .disabled a {
-  opacity: 0.5;
-}
-#obs .pages li:hover {
-  background: rgba(116, 172, 0, 0.15);
-}
-#obs .pages li.disabled:hover {
-  background: #efefef;
-}
-
-#obs .pages li:first-child {
-  border-right: 2px solid white;
 }

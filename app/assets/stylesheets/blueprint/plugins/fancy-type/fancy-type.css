@@ -20,8 +20,7 @@
    Best used on prepositions and ampersands. */
   
 .alt { 
-  color: #666; 
-  font-family: "Warnock Pro", "Goudy Old Style","Palatino","Book Antiqua", Georgia, serif; 
+  color: #666;
   font-style: italic;
   font-weight: normal;
 }

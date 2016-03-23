@@ -57,16 +57,8 @@ class Observation < ActiveRecord::Base
 
   attr_accessor :twitter_sharing
   attr_accessor :facebook_sharing
-  
-  def captive_flag
-    @captive_flag ||= !quality_metrics.detect{|qm| 
-      qm.user_id == user_id && qm.metric == QualityMetric::WILD && !qm.agree?
-    }.nil?
-  end
 
-  def captive_flag=(v)
-    @captive_flag = v
-  end
+  attr_accessor :captive_flag
   attr_accessor :force_quality_metrics
 
   # custom project field errors
@@ -82,7 +74,6 @@ class Observation < ActiveRecord::Base
   COORDINATE_REGEX = /[^\d\,]*?(#{FLOAT_REGEX})[^\d\,]*?/
   LAT_LON_SEPARATOR_REGEX = /[\,\s]\s*/
   LAT_LON_REGEX = /#{COORDINATE_REGEX}#{LAT_LON_SEPARATOR_REGEX}#{COORDINATE_REGEX}/
-  COORDINATE_UNCERTAINTY_CELL_SIZE = 0.2
 
   OPEN = "open"
   PRIVATE = "private"
@@ -101,7 +92,6 @@ class Observation < ActiveRecord::Base
   COMMUNITY_TAXON_SCORE_CUTOFF = (2.0 / 3)
   
   LICENSES = [
-    ["CC0", :cc_0_name, :cc_0_description],
     ["CC-BY", :cc_by_name, :cc_by_description],
     ["CC-BY-NC", :cc_by_nc_name, :cc_by_nc_description],
     ["CC-BY-SA", :cc_by_sa_name, :cc_by_sa_description],
@@ -113,7 +103,7 @@ class Observation < ActiveRecord::Base
   LICENSES.each do |code, name, description|
     const_set code.gsub(/\-/, '_'), code
   end
-  PREFERRED_LICENSES = [CC_BY, CC_BY_NC, CC0]
+  PREFERRED_LICENSES = [CC_BY, CC_BY_NC]
   CSV_COLUMNS = [
     "id", 
     "species_guess",
@@ -261,7 +251,7 @@ class Observation < ActiveRecord::Base
     class_name: "ObservationReview"
 
   FIELDS_TO_SEARCH_ON = %w(names tags description place)
-  NON_ELASTIC_ATTRIBUTES = %w(establishment_means em)
+  NON_ELASTIC_ATTRIBUTES = %w(establishment_means em list_id)
 
   accepts_nested_attributes_for :observation_field_values, 
     :allow_destroy => true, 
@@ -323,7 +313,6 @@ class Observation < ActiveRecord::Base
               :obscure_coordinates_for_geoprivacy,
               :obscure_coordinates_for_threatened_taxa,
               :set_geom_from_latlon,
-              :set_place_guess_from_latlon,
               :set_iconic_taxon
   
   before_update :handle_id_please_on_update, :set_quality_grade
@@ -394,13 +383,7 @@ class Observation < ActiveRecord::Base
     joins("JOIN place_geometries ON place_geometries.place_id = #{place_id}").
     where("ST_Intersects(place_geometries.geom, observations.private_geom)")
   }
-
-  # should use .select("DISTINCT observations.*")
-  scope :in_places, lambda {|place_ids|
-    joins("JOIN place_geometries ON place_geometries.place_id IN (#{place_ids.join(",")})").
-    where("ST_Intersects(place_geometries.geom, observations.private_geom)")
-  }
-
+  
   scope :in_taxons_range, lambda {|taxon|
     taxon_id = taxon.is_a?(Taxon) ? taxon.id : taxon.to_i
     joins("JOIN taxon_ranges ON taxon_ranges.taxon_id = #{taxon_id}").
@@ -1167,11 +1150,7 @@ class Observation < ActiveRecord::Base
     # community_supported_id? && research_grade_candidate?
     quality_grade == RESEARCH_GRADE
   end
-
-  def verifiable?
-    [ NEEDS_ID, RESEARCH_GRADE ].include?(quality_grade)
-  end
-
+  
   def photos?
     observation_photos.loaded? ? ! observation_photos.empty? : observation_photos.exists?
   end
@@ -1650,27 +1629,6 @@ class Observation < ActiveRecord::Base
     end
     true
   end
-
-  def set_place_guess_from_latlon
-    return true unless place_guess.blank?
-    sys_places = system_places
-    return true if sys_places.blank?
-    sys_places_codes = sys_places.map(&:code)
-    first_name = if sys_places[0].admin_level == Place::COUNTY_LEVEL && sys_places_codes.include?('US')
-      "#{sys_places[0].name} County"
-    else
-      I18n.t( sys_places[0].name, locale: user.locale, default: sys_places[0].name )
-    end
-    remaining_names = system_places[1..-1].map do |p|
-      if p.admin_level == Place::COUNTY_LEVEL && sys_places_codes.include?('US')
-        "#{p.name} County"
-      else
-        p.code.blank? ? I18n.t( p.name, locale: user.locale, default: p.name ) : p.code
-      end
-    end
-    self.place_guess = [first_name, remaining_names].flatten.join(', ')
-    true
-  end
   
   def set_license
     return true if license_changed? && license.blank?
@@ -1878,50 +1836,17 @@ class Observation < ActiveRecord::Base
   end
   
   def self.random_neighbor_lat_lon(lat, lon)
+    cell_size = 0.2
+    half_cell = cell_size / 2
+    # how many significant digits in the obscured coordinates (e.g. 5)
     precision = 10**5.0
     range = ((-1 * precision)..precision)
-    half_cell = COORDINATE_UNCERTAINTY_CELL_SIZE / 2
-    base_lat, base_lon = uncertainty_cell_southwest_latlon( lat, lon )
-    [ base_lat + ((rand(range) / precision) * half_cell),
-      base_lon + ((rand(range) / precision) * half_cell)]
-  end
-
-  # 
-  # Coordinates of the southwest corner of the uncertainty cell for any given coordinates
-  # 
-  def self.uncertainty_cell_southwest_latlon( lat, lon )
-    half_cell = COORDINATE_UNCERTAINTY_CELL_SIZE / 2
-    # how many significant digits in the obscured coordinates (e.g. 5)
     # doing a floor with intervals of 0.2, then adding 0.1
     # so our origin is the center of a 0.2 square
-    base_lat = lat - (lat % COORDINATE_UNCERTAINTY_CELL_SIZE) + half_cell
-    base_lon = lon - (lon % COORDINATE_UNCERTAINTY_CELL_SIZE) + half_cell
-    [base_lat, base_lon]
-  end
-
-  #
-  # Distance of a diagonal from corner to corner across the uncertainty cell
-  # for the given coordinates.
-  #
-  def self.uncertainty_cell_diagonal_meters( lat, lon )
-    base_lat, base_lon = uncertainty_cell_southwest_latlon( lat, lon )
-    lat_lon_distance_in_meters( 
-      base_lat, 
-      base_lon, 
-      base_lat+COORDINATE_UNCERTAINTY_CELL_SIZE,
-      base_lon+COORDINATE_UNCERTAINTY_CELL_SIZE
-    ).ceil
-  end
-
-  #
-  # Distance of a diagonal from corner to corner across the uncertainty cell
-  # for this observation's coordinates.
-  # 
-  def uncertainty_cell_diagonal_meters
-    return nil unless georeferenced?
-    lat = private_latitude || latitude
-    lon = private_longitude || longitude
-    Observation.uncertainty_cell_diagonal_meters( lat, lon )
+    base_lat = lat - (lat % cell_size) + half_cell
+    base_lon = lon - (lon % cell_size) + half_cell
+    [ base_lat + ((rand(range) / precision) * half_cell),
+      base_lon + ((rand(range) / precision) * half_cell)]
   end
   
   def places
@@ -1931,10 +1856,10 @@ class Observation < ActiveRecord::Base
     acc = public_positional_accuracy || private_positional_accuracy || positional_accuracy
     candidates = Place.containing_lat_lng(lat, lon).sort_by{|p| p.bbox_area || 0}
 
-    # At present we use PostGIS GEOMETRY types, which are a bit stupid about
+    # at present we use PostGIS GEOMETRY types, which are a bit stupid about
     # things crossing the dateline, so we need to do an app-layer check.
     # Converting to the GEOGRAPHY type would solve this, in theory.
-    # Unfortunately this does NOT solve the problem of failing to select 
+    # Unfrotinately this does NOT solve the problem of failing to select 
     # legit geoms that cross the dateline. GEOGRAPHY would solve that too.
     candidates.select do |p| 
       # HACK: bbox_contains_lat_lng_acc uses rgeo, which despite having a
@@ -1950,17 +1875,17 @@ class Observation < ActiveRecord::Base
     end
   end
   
-  # For obscured coordinates only return default place types that weren't
-  # made by users. This is not ideal, but hopefully will get around honey
-  # pots.
   def public_places
     all_places = places
     return if all_places.blank?
     return all_places unless coordinates_obscured?
+    
+    # for obscured coordinates only return default place types that weren't
+    # made by users. This is not ideal, but hopefully will get around honey
+    # pots.
     system_places(:places => all_places)
   end
 
-  # The places that are theoretically controlled by site admins
   def system_places(options = {})
     all_places = options[:places] || places
     all_places.select do |p| 
@@ -2183,16 +2108,9 @@ class Observation < ActiveRecord::Base
     scope = Observation.where("observations.taxon_id IN (?)", input_taxon_ids)
     scope = scope.by(options[:user]) if options[:user]
     scope = scope.where("observations.id IN (?)", options[:records].to_a) unless options[:records].blank?
-    scope = scope.includes(:user, :identifications)
+    scope = scope.includes(:user)
     scope.find_each do |observation|
-      if observation.owners_identification && input_taxon_ids.include?( observation.owners_identification.taxon_id )
-        Identification.create(
-          user: observation.user,
-          observation: observation,
-          taxon: taxon,
-          taxon_change: taxon_change
-        )
-      end
+      Identification.create(:user => observation.user, :observation => observation, :taxon => taxon, :taxon_change => taxon_change)
       yield(observation) if block_given?
     end
   end
@@ -2335,7 +2253,11 @@ class Observation < ActiveRecord::Base
 
   def calculate_public_positional_accuracy
     if coordinates_obscured?
-      [ positional_accuracy.to_i, uncertainty_cell_diagonal_meters, 0 ].max
+      if positional_accuracy.blank?
+        M_TO_OBSCURE_THREATENED_TAXA
+      else
+        [ positional_accuracy, M_TO_OBSCURE_THREATENED_TAXA, 0 ].max
+      end
     elsif !positional_accuracy.blank?
       positional_accuracy
     end
@@ -2354,7 +2276,7 @@ class Observation < ActiveRecord::Base
 
   def calculate_mappable
     return false if latitude.blank? && longitude.blank?
-    return false if public_positional_accuracy && public_positional_accuracy > uncertainty_cell_diagonal_meters
+    return false if public_positional_accuracy && public_positional_accuracy > M_TO_OBSCURE_THREATENED_TAXA
     return false if captive
     return false if inaccurate_location?
     true
@@ -2371,13 +2293,6 @@ class Observation < ActiveRecord::Base
     scope = (filter_scope && filter_scope.is_a?(ActiveRecord::Relation)) ?
       filter_scope : self.all
     if filter_ids = options.delete(:ids)
-      if filter_ids.length > 1000
-        # call again for each batch, then return
-        filter_ids.each_slice(1000) do |slice|
-          update_observations_places(options.merge(ids: slice))
-        end
-        return
-      end
       scope = scope.where(id: filter_ids)
     end
     scope.select(:id).find_in_batches(options) do |batch|
@@ -2554,14 +2469,6 @@ class Observation < ActiveRecord::Base
       deleted += ids.size
     end
     puts "Deleted #{deleted} observations in #{Time.now - start}s" if options[:debug]
-  end
-
-  def self.index_observations_for_user(user_id)
-    Observation.elastic_index!( scope: Observation.by( user_id ) )
-  end
-
-  def self.refresh_es_index
-    Observation.__elasticsearch__.refresh_index! unless Rails.env.test?
   end
 
 end

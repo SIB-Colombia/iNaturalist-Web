@@ -144,14 +144,7 @@ class TaxaController < ApplicationController
     if params[:entry] == 'widget'
       flash[:notice] = t(:click_add_an_observation_to_the_lower_right, :site_name_short => CONFIG.site_name_short)
     end
-    if params[:id]
-      begin
-        @taxon ||= Taxon.where(id: params[:id]).includes(:taxon_names).first
-      rescue RangeError => e
-        Logstasher.write_exception(e, request: request, session: session, user: current_user)
-        nil
-      end
-    end
+    @taxon ||= Taxon.where(id: params[:id]).includes(:taxon_names).first if params[:id]
     return render_404 unless @taxon
     
     respond_to do |format|
@@ -191,7 +184,7 @@ class TaxaController < ApplicationController
           group(:place_id, :taxon_id).
           where("place_id IS NOT NULL AND taxon_id = ?", @taxon)
         @sorted_check_listed_taxa = @check_listed_taxa.sort_by{|lt| lt.place.try(:place_type) || 0}.reverse
-        @places = @check_listed_taxa.map{ |lt| lt.place }.compact.uniq{ |p| p.id }
+        @places = @check_listed_taxa.map{|lt| lt.place}.uniq{|p| p.id}
         @countries = @taxon.places.where(["place_type = ?", Place::PLACE_TYPE_CODES['Country']]).
           select("places.id, place_type, code, admin_level").uniq{ |p| p.id }
         if @countries.size == 1 && @countries.first.code == 'US'
@@ -214,13 +207,7 @@ class TaxaController < ApplicationController
           @listed_taxa = ListedTaxon.joins(:list).
             where(taxon_id: @taxon, lists: { user_id: current_user })
           @listed_taxa_by_list_id = @listed_taxa.index_by{|lt| lt.list_id}
-          @current_user_lists = current_user.lists.includes(:rules).
-            where("(type IN ('LifeList', 'List') OR type IS NULL)").
-            order("lower( lists.title )").
-            limit(200).to_a
-          if life_list_index = @current_user_lists.index{|l| l.id == current_user.life_list_id}
-            @current_user_lists.insert(0, @current_user_lists.delete_at( life_list_index ) )
-          end
+          @current_user_lists = current_user.lists.includes(:rules)
           @lists_rejecting_taxon = @current_user_lists.select do |list|
             if list.is_a?(LifeList) && (rule = list.rules.detect{|rule| rule.operator == "in_taxon?"})
               !rule.validates?(@taxon)
@@ -796,7 +783,7 @@ class TaxaController < ApplicationController
     (place_names - @places.map{|p| p.name.strip.downcase}).each do |new_place_name|
       ydn_places = GeoPlanet::Place.search(new_place_name, :count => 1, :type => "Country")
       next if ydn_places.blank?
-      @places << Place.import_by_woeid(ydn_places.first.woeid, user: current_user)
+      @places << Place.import_by_woeid(ydn_places.first.woeid)
     end
     
     @listed_taxa = @places.map do |place| 
@@ -827,9 +814,7 @@ class TaxaController < ApplicationController
       p.valid? ? nil : p.errors.full_messages
     end.flatten.compact
     @taxon.photos = photos
-    unless @taxon.save
-      errors << "Failed to save taxon: #{@taxon.errors.full_messages.to_sentence}"
-    end
+    @taxon.save
     unless photos.count == 0
       Taxon.delay(:priority => INTEGRITY_PRIORITY).update_ancestor_photos(@taxon.id, photos.first.id)
     end

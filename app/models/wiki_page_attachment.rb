@@ -17,21 +17,7 @@ class WikiPageAttachment < ActiveRecord::Base
       'image/x-png',
       'image/gif',
       'image/pjpeg',
-      'application/pdf',
-      'image/svg+xml'
-    ], :message => ' must be a JPEG, PNG , GIF, PDF, or SVG'
-  end
-
-  IMAGE_CONTENT_TYPES = [
-    'image/jpeg',
-    'image/jpg',
-    'image/png',
-    'image/x-png',
-    'image/gif',
-    'image/pjpeg'
-  ]
-
-  def image?
-    IMAGE_CONTENT_TYPES.include?( wiki_page_attachment.content_type )
+      'application/pdf'
+    ], :message => ' must be a JPEG, PNG , GIF, or PDF.'
   end
 end

@@ -53,11 +53,7 @@ module WikiPagesHelper
 
     html = ""
     page.attachments.each do |attachment|
-      img = if attachment.image?
-        "<a target=\"_blank\" href=\"#{attachment.wiki_page_attachment.url(:original)}\">#{image_tag(attachment.wiki_page_attachment.url(:thumb))}</a>".html_safe
-      else
-        "<a target=\"_blank\" href=\"#{attachment.wiki_page_attachment.url(:original)}\">#{ t :view }</a>".html_safe
-      end
+      img = "<a target=\"_blank\" href=\"#{attachment.wiki_page_attachment.url(:original)}\">#{image_tag(attachment.wiki_page_attachment.url(:thumb))}</a>".html_safe
       html += image_and_content(img, :image_size => 100, 
           :class => "stacked wiki_page_attachment") do
         s = link_to(wt('Remove'), wiki_remove_page_attachment_path(attachment.id), :method => :delete, :class => "right")

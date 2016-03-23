@@ -69,7 +69,6 @@ class IdentificationsController < ApplicationController
         end
         
         format.json do
-          Observation.refresh_es_index
           @identification.html = view_context.render_in_format(:html, :partial => "identifications/identification")
           render :json => @identification.to_json(
             :methods => [:html], 
@@ -106,10 +105,7 @@ class IdentificationsController < ApplicationController
           flash[:notice] = msg
           redirect_to @identification.observation
         end
-        format.json do
-          Observation.refresh_es_index
-          render :json => @identification
-        end
+        format.json { render :json => @identification }
       end
     else
       msg = t(:there_was_a_problem_saving_your_identification, :error => @identification.errors.full_messages.join(', '))
@@ -135,14 +131,8 @@ class IdentificationsController < ApplicationController
         flash[:notice] = t(:identification_deleted)
         redirect_to observation
       end
-      format.js do
-        Observation.refresh_es_index
-        render :status => :ok, :json => nil
-      end
-      format.json do
-        Observation.refresh_es_index
-        render :status => :ok, :json => nil
-      end
+      format.js { render :status => :ok, :json => nil }
+      format.json { render :status => :ok, :json => nil }
     end
   end
   

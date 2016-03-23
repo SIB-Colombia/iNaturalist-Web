@@ -17,7 +17,6 @@ class ApplicationController < ActionController::Base
   before_filter :return_here, :only => [:index, :show, :by_login]
   before_filter :return_here_from_url
   before_filter :user_logging
-  before_filter :check_user_last_active
   after_filter :user_request_logging
   before_filter :remove_header_and_footer_for_apps
   before_filter :login_from_param
@@ -134,11 +133,24 @@ class ApplicationController < ActionController::Base
   end
 
   protected
+  
+  # TODO Remove this
+  def get_user
+    @user = self.current_user if logged_in?
+  end
 
   def get_flickraw
     current_user ? FlickrPhoto.flickraw_for_user(current_user) : flickr
   end
-
+  
+  def flickr_required
+    if logged_in? && current_user.flickr_identity
+      true
+    else
+      redirect_to(:controller => 'flickr', :action => 'options')
+    end
+  end
+  
   def photo_identities_required
     return true if logged_in? && !@photo_identities.blank?
     redirect_to(:controller => 'flickr', :action => 'options')
@@ -201,20 +213,7 @@ class ApplicationController < ActionController::Base
     msg += " for user: #{current_user.login} #{current_user.id}" if logged_in?
     Rails.logger.info msg
   end
-
-  def check_user_last_active
-    if current_user
-      # there is a current_user, so that user is active
-      if current_user.last_active.nil? || current_user.last_active != Date.today
-        current_user.update_column(:last_active, Date.today)
-      end
-      # since they are active, unsuspend any stopped subscriptions
-      if current_user.subscriptions_suspended_at
-        current_user.update_column(:subscriptions_suspended_at, nil)
-      end
-    end
-  end
-
+  
   #
   # Return a 404 response with our default 404 page
   #
@@ -244,9 +243,9 @@ class ApplicationController < ActionController::Base
   
   def load_user_by_login
     @login = params[:login].to_s.downcase
-    @selected_user =  @login.blank? ? nil :
-      User.where("lower(login) = ?", @login).first
-    return render_404 unless @selected_user
+    unless @selected_user = User.where("lower(login) = ?", @login).first
+      return render_404
+    end
   end
 
   def load_record(options = {})
@@ -329,7 +328,7 @@ class ApplicationController < ActionController::Base
     Place.preload_associations(@places, :place_geometry_without_geom)
     if logged_in? && @places.blank? && !params[:q].blank?
       if ydn_places = GeoPlanet::Place.search(params[:q], :count => 5)
-        new_places = ydn_places.map {|p| Place.import_by_woeid(p.woeid, user: current_user)}.compact
+        new_places = ydn_places.map {|p| Place.import_by_woeid(p.woeid)}.compact
         @places = Place.where("id in (?)", new_places.map(&:id).compact).page(1).to_a
       end
     end

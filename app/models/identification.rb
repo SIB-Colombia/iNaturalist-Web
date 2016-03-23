@@ -306,8 +306,6 @@ class Identification < ActiveRecord::Base
         ).update_observed_taxa_count(po.project_id)
       end
     end
-    obs.reload
-    obs.elastic_index!
   end
   
   def self.run_revisit_curator_identification(observation_id, user_id)
@@ -341,8 +339,6 @@ class Identification < ActiveRecord::Base
         ).update_observed_taxa_count(po.project_id)
       end
     end
-    obs.reload
-    obs.elastic_index!
   end
 
   def self.update_for_taxon_change(taxon_change, taxon, options = {})

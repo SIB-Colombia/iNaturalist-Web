@@ -1,4 +1,5 @@
 - content_for :title do
   = @title = "Running #{@flow_task.class.name.underscore.humanize.downcase.gsub(/flow task/, '')}..."
+%p.current-file views/flow_tasks/run.html.haml
 %h2= @title
 = render :partial => "delayed_progress", :locals => {:redirect_url => flow_task_redirect_url(@flow_task)}

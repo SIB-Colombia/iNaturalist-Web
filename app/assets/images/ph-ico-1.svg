@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="204px" height="204px" viewBox="0 0 204 204" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:sketch="http://www.bohemiancoding.com/sketch/ns">
+    <!-- Generator: Sketch 3.4 (15575) - http://www.bohemiancoding.com/sketch -->
+    <title>ph-ico-1</title>
+    <desc>Created with Sketch.</desc>
+    <defs></defs>
+    <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" sketch:type="MSPage">
+        <g id="ph-ico-1" sketch:type="MSLayerGroup" transform="translate(2.000000, 2.000000)">
+            <path d="M200,100 C200,155.228 155.228,200 100,200 C44.772,200 0,155.228 0,100 C0,44.772 44.772,0 100,0 C155.228,0 200,44.772 200,100 L200,100 Z" id="Stroke-1" stroke="#00A0B0" stroke-width="4" sketch:type="MSShapeGroup"></path>
+            <path d="M115.9137,135.9483 L94.0827,135.9483 L94.0827,93.8103 C94.0827,88.6933 94.1917,84.0113 94.4097,79.7643 C93.0657,81.3983 91.3967,83.1043 89.4007,84.8833 L80.3637,92.3413 L69.2037,78.6223 L96.5327,56.3553 L115.9137,56.3553 L115.9137,135.9483 Z" id="Fill-3" fill="#00A0B0" sketch:type="MSShapeGroup"></path>
+        </g>
+    </g>
+</svg>

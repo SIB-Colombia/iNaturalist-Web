@@ -9,14 +9,12 @@ class ProjectsController < ApplicationController
     :cache_path => Proc.new {|c| c.params}, 
     :if => Proc.new {|c| c.request.format == :widget}
 
-  before_action :doorkeeper_authorize!, 
-    only: [ :by_login, :join, :leave, :members ],
-    if: lambda { authenticate_with_oauth? }
+  before_action :doorkeeper_authorize!, :only => [ :by_login, :join, :leave ], :if => lambda { authenticate_with_oauth? }
   
   before_filter :return_here, :only => [:index, :show, :contributors, :members, :show_contributor, :terms, :invite]
   before_filter :authenticate_user!, 
     :unless => lambda { authenticated_with_oauth? },
-    :except => [ :index, :show, :search, :map, :contributors, :observed_taxa_count, :browse, :calendar ]
+    :except => [:index, :show, :search, :map, :contributors, :observed_taxa_count, :browse]
   load_except = [ :create, :index, :search, :new, :by_login, :map, :browse, :calendar ]
   before_filter :load_project, :except => load_except
   blocks_spam :except => load_except, :instance => :project
@@ -132,7 +130,7 @@ class ProjectsController < ApplicationController
           ]).
           order("project_observations.id DESC")
         @project_observations_count = @project_observations.count
-        @observations = @project_observations.map(&:observation)
+        @observations = @project_observations.map(&:observation) unless @project.project_type == 'bioblitz'
         @project_journal_posts = @project.posts.published.order("published_at DESC").limit(4)
         @custom_project = @project.custom_project
         @project_assets = @project.project_assets.limit(100)
@@ -151,9 +149,12 @@ class ProjectsController < ApplicationController
           map(&:provider_uid)
         @fb_admin_ids += CONFIG.facebook.admin_ids if CONFIG.facebook && CONFIG.facebook.admin_ids
         @fb_admin_ids = @fb_admin_ids.compact.map(&:to_s).uniq
-        @observations_url_params = { projects: [@project.slug] }
+        @observations_url_params = if @project.project_type == Project::BIOBLITZ_TYPE
+          @project.observations_url_params
+        else
+          { projects: [@project.slug] }
+        end
         @observations_url = observations_url(@observations_url_params)
-        @observation_search_url_params = { place_id: "any", verifiable: "any", project_id: @project.slug }
         if logged_in? && @project_user.blank?
           @project_user_invitation = @project.project_user_invitations.where(:invited_user_id => current_user).first
         end
@@ -549,9 +550,6 @@ class ProjectsController < ApplicationController
       @place = Place.find(params[:place_id]) rescue nil
     end
     @projects = @projects.in_place(@place) if @place
-    if @eventsonly = params[:eventsonly].yesish?
-      @projects = @projects.where("(end_time - start_time) < '2 weeks'::interval")
-    end
     respond_to do |format|
       format.html do
         @projects = @projects.page(params[:page]).includes(:place)
@@ -849,7 +847,7 @@ class ProjectsController < ApplicationController
     @taxon = Taxon.find_by_id(params[:taxon_id]) unless params[:taxon_id].blank?
     scope = @project.observations_matching_rules.
       by(current_user).
-      joins(:project_observations).
+      includes(:taxon, :project_observations).
       where("project_observations.id IS NULL OR project_observations.project_id != ?", @project)
     scope = scope.of(@taxon) if @taxon
     scope
@@ -926,8 +924,11 @@ class ProjectsController < ApplicationController
     else
       params[:project].delete(:featured_at)
     end
-    if params[:project][:project_type] != Project::BIOBLITZ_TYPE && !current_user.is_curator?
-      params[:project][:prefers_aggregation] = false
+
+    if !current_user.is_curator? && params[:project][:prefers_aggregation].yesish? && (@project.blank? || !@project.prefers_aggregation?)
+      flash[:error] = I18n.t(:only_site_curators_can_turn_on_observation_aggregation)
+      redirect_back_or_default @project
+      return false
     end
     true
   end

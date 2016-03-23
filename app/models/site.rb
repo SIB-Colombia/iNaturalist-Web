@@ -1,9 +1,8 @@
 class Site < ActiveRecord::Base
-  has_many :observations, inverse_of: :site
-  has_many :users, inverse_of: :site
-  has_many :site_admins, inverse_of: :site
-  has_many :posts, as: :parent, dependent: :destroy
-  has_many :journal_posts, class_name: "Post", as: :parent, dependent: :destroy
+  # attr_accessible :name, :flickr
+  has_many :observations, :inverse_of => :site
+  has_many :users, :inverse_of => :site
+  has_many :site_admins, :inverse_of => :site
 
   scope :live, -> { where(draft: false) }
   scope :drafts, -> { where(draft: true) }
@@ -73,7 +72,7 @@ class Site < ActiveRecord::Base
       :bucket => CONFIG.s3_bucket,
       :path => "sites/:id-logo_square.:extension",
       :url => ":s3_alias_url",
-      :default_url => ->(i){ FakeView.image_url("bird.png") }
+      :default_url => FakeView.image_url("bird.png")
   else
     has_attached_file :logo_square,
       :path => ":rails_root/public/attachments/sites/:id-logo_square.:extension",
@@ -83,24 +82,6 @@ class Site < ActiveRecord::Base
   validates_attachment_content_type :logo_square, :content_type => [/jpe?g/i, /png/i, /gif/i, /octet-stream/], 
     :message => "must be JPG, PNG, or GIF"
 
-  # large square branding image that appears on pages like /login. Should be 300 px wide and about that tall
-  if Rails.env.production?
-    has_attached_file :logo_email_banner,
-      :storage => :s3,
-      :s3_credentials => "#{Rails.root}/config/s3.yml",
-      :s3_host_alias => CONFIG.s3_bucket,
-      :bucket => CONFIG.s3_bucket,
-      :path => "sites/:id-logo_email_banner.:extension",
-      :url => ":s3_alias_url",
-      :default_url => ->(i){ FakeView.image_url("inat_email_banner.png") }
-  else
-    has_attached_file :logo_email_banner,
-      :path => ":rails_root/public/attachments/sites/:id-logo_email_banner.:extension",
-      :url => "#{ CONFIG.attachments_host }/attachments/sites/:id-logo_email_banner.:extension",
-      :default_url => FakeView.image_url("inat_email_banner.png")
-  end
-  validates_attachment_content_type :logo_email_banner, :content_type => [/jpe?g/i, /png/i, /gif/i, /octet-stream/], :message => "must be JPG, PNG, or GIF"
-      
   # CSS file to override default styles
   if Rails.env.production?
     has_attached_file :stylesheet,
@@ -123,9 +104,6 @@ class Site < ActiveRecord::Base
 
   # URL where visitors can get help using the site
   preference :help_url, :string, :default => FakeView.wiki_page_url("help")
-
-  # URL where press can learn more about the site and get assets
-  preference :press_url, :string
 
   preference :feedback_url, :string
   preference :terms_url, :string, :default => FakeView.wiki_page_url("terms")
@@ -213,29 +191,12 @@ class Site < ActiveRecord::Base
   preference :natureserve_key, :string
   preference :custom_logo, :text
   preference :custom_footer, :text
-  preference :custom_email_footer_leftside, :text
-  preference :custom_email_footer_rightside, :text
 
   def to_s
     "<Site #{id} #{url}>"
   end
 
-  def respond_to?(method, include_all=false)
-    preferences.keys.include?(method.to_s) ? true : super
-  end
-
   def method_missing(method, *args, &block)
     preferences.keys.include?(method.to_s) ? preferences[method.to_s] : super
-  end
-
-  def editable_by?(user)
-    user && user.is_admin?
-  end
-
-  def icon_url
-    return nil unless logo_square.file?
-    url = logo_square.url
-    url = URI.join(CONFIG.site_url, url).to_s unless url =~ /^http/
-    url
   end
 end

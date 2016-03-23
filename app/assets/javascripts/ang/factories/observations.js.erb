@@ -1,11 +1,11 @@
-iNatAPI.factory(  "ObservationsFactory", [ "shared", function( shared ) {
-  var show = function( id, params ) {
+iNatAPI.factory( "ObservationsFactory", [ "shared", function( shared ) {
+  var show = function( id ) {
     var url = "//<%= CONFIG.node_api_host %>/observations/" + id;
-    if( params ) { url += "?" + $.param(params); }
     return shared.basicGet( url, { cache: true } );
   };
   var search = function( params ) {
     var url = "//<%= CONFIG.node_api_host %>/observations";
+    params.per_page = 12;
     if( params ) { url += "?" + $.param(params); }
     return shared.basicGet( url );
   };
@@ -39,7 +39,6 @@ iNatAPI.factory(  "ObservationsFactory", [ "shared", function( shared ) {
     if( params.place_id == "any" ) {
       delete params.place_id;
     }
-    if( p.per_page ) { params.per_page = p.per_page; }
     return params;
   };
   // Normalizes an object literal of observation query parameters into

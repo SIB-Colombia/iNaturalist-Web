@@ -1,4 +1,4 @@
-var application =  angular.module( "ObservationSearch", [
+var application = angular.module( "ObservationSearch", [
   "infinite-scroll",
   "templates",
   "ehFilters", // angular-capitalize
@@ -49,10 +49,6 @@ application.config( [ "$locationProvider", function($locationProvider) {
   });
 }]);
 
-if( TIMEZONE ) {
-  application.constant( "angularMomentConfig", { timezone: TIMEZONE });
-}
-
 application.controller( "SearchController", [ "ObservationsFactory", "PlacesFactory",
 "TaxaFactory", "shared", "$scope", "$rootScope", "$location", "$anchorScroll", "$uibPosition",
 function( ObservationsFactory, PlacesFactory, TaxaFactory, shared, $scope, $rootScope, $location, $anchorScroll ) {
@@ -83,11 +79,6 @@ function( ObservationsFactory, PlacesFactory, TaxaFactory, shared, $scope, $root
   $scope.placeInitialized = false;
   $scope.filtersInitialized = false;
   $scope.parametersInitialized = false;
-  $scope.moreFiltersHidden = true;
-  $scope.moreFiltersToWatch = [ "params.user_id", "params.project_id", 
-    "params.photo_license", "params.reviewed", "params.created_on", 
-    "params.created_month", "params.created_d1", "params.created_d2",
-    "clickedMoreFiltersOpen" ];
 
   $scope.$watchGroup(['mapType', 'mapLabels', 'mapTerrain'], function() {
     $rootScope.$emit( "setMapType", $scope.mapType, $scope.mapLabels, $scope.mapTerrain );
@@ -125,9 +116,6 @@ function( ObservationsFactory, PlacesFactory, TaxaFactory, shared, $scope, $root
     $scope.setupPlaceSearchbox( );
     $scope.determineFieldNames( );
     $scope.setupTaxonAutocomplete( );
-    $scope.setupInatPlaceAutocomplete( );
-    $scope.setupUserAutocomplete( );
-    $scope.setupProjectAutocomplete( );
     $scope.setupBrowserStateBehavior( );
     $scope.filtersInitialized = true;
     // someone searched with taxon_name, but no mathing taxon was found,
@@ -166,7 +154,7 @@ function( ObservationsFactory, PlacesFactory, TaxaFactory, shared, $scope, $root
   $scope.watchParams = function( ) {
     // params may change but not affect the results
     // for example DateType will change with the different date options
-    $scope.$watch( "params", function(newValue, oldValue ) {
+    $scope.$watch( "params", function( ) {
       $scope.processedParams = ObservationsFactory.processParamsForAPI( $scope.params, $scope.possibleFields );
       if ( CURRENT_USER ) {
         $scope.showingViewerObservations = (
@@ -174,23 +162,10 @@ function( ObservationsFactory, PlacesFactory, TaxaFactory, shared, $scope, $root
           ($scope.processedParams.user_id == CURRENT_USER.login)
         );
       }
-      if( _.isEqual( newValue, oldValue ) ) { return; }
-      // if any of the filters change we want to reset the page to 1.
-      // when pagination, the page will change, so if the page doesn't
-      // change, then the user is changing another filter, so go to page 1
-      if( newValue.page === oldValue.page ) {
-        $scope.params.page = 1;
-      }
     }, true);
     // changes in processedParams are what initiate searches
     $scope.$watch( "processedParams", function( before, after ) {
       if( _.isEqual( before, after ) ) { return; }
-      // when paginating we do want to set processedParams, but we don't
-      // want to query for the stats again as they will stay the same
-      if( $scope.skipParamChange ) {
-        $scope.skipParamChange = false;
-        return;
-      }
       // we don't want to set the location on page load, it will already be set
       $scope.searchAndUpdateStats({ skipSetLocation: $scope.goingBack });
       $rootScope.$emit( "setMapLayers", $scope.alignMapOnSearch );
@@ -199,36 +174,6 @@ function( ObservationsFactory, PlacesFactory, TaxaFactory, shared, $scope, $root
       $scope.goingBack = false;
     }, true);
   };
-  $scope.toggleMoreFilters = function( ) {
-    $scope.clickedMoreFiltersOpen = $scope.clickedMoreFiltersOpen == true ? false : true;
-  };
-  // watch more filters to dermine whether to show them or not
-  $scope.$watchGroup( $scope.moreFiltersToWatch, function(newValues, oldValues, scope) {
-    var pageInit = _.isEqual( newValues, oldValues );
-    if ( $scope.clickedMoreFiltersOpen ) {
-      scope.moreFiltersHidden = false;
-      return;
-    } else if ( $scope.clickedMoreFiltersOpen == false ) {
-      scope.moreFiltersHidden = true;
-      return;
-    }
-    var moreFiltersHidden = true;
-    _.each( scope.moreFiltersToWatch, function( f ) {
-      if ( newValues[ $scope.moreFiltersToWatch.indexOf( f ) ] ) {
-        moreFiltersHidden = false;
-      };
-    } );
-    if ( pageInit && $scope.clickedMoreFiltersOpen == null && !moreFiltersHidden ) {
-      $scope.clickedMoreFiltersOpen = true;
-    };
-    scope.moreFiltersHidden = moreFiltersHidden;
-  } );
-  $scope.$watch( "params.user_id", function( ) {
-    $scope.updateUserAutocomplete( );
-  });
-  $scope.$watch( "params.project_id", function( ) {
-    $scope.updateProjectAutocomplete( );
-  });
   // watch for place selections, unselections
   $scope.$watch( "selectedPlace", function( ) {
     if( $scope.selectedPlace && $scope.selectedPlace.id ) {
@@ -237,12 +182,10 @@ function( ObservationsFactory, PlacesFactory, TaxaFactory, shared, $scope, $root
         $scope.mapBoundsIcon = null;
         $scope.alignMapOnSearch = true;
         $scope.params.place_id = $scope.selectedPlace.id;
-        $scope.updatePlaceAutocomplete( );
       }
-    } else if( !_.isArray( $scope.params.place_id) ) {
+    } else {
       $scope.alignMapOnSearch = false;
       $scope.params.place_id = "any";
-      $scope.updatePlaceAutocomplete( );
     }
   });
   $scope.initializeTaxonParams = function( ) {
@@ -252,16 +195,14 @@ function( ObservationsFactory, PlacesFactory, TaxaFactory, shared, $scope, $root
     if( $scope.params.taxon_id ) {
       // load taxon auto name and photo for autocomplete. Send locale
       // params to we load the right taxon name for the users's prefs
-      TaxaFactory.show( $scope.params.taxon_id, iNaturalist.localeParams( ) ).
-        then( function( response ) {
-          taxa = TaxaFactory.responseToInstances( response );
-          if( taxa.length > 0 ) {
-            $scope.selectedTaxon = taxa[ 0 ];
-          }
-          $scope.updateTaxonAutocomplete( );
-          $scope.taxonInitialized = true;
+      TaxaFactory.show( $scope.params.taxon_id, shared.localeParams( ) ).then( function( response ) {
+        taxa = TaxaFactory.responseToInstances( response );
+        if( taxa.length > 0 ) {
+          $scope.selectedTaxon = taxa[ 0 ];
         }
-      );
+        $scope.updateTaxonAutocomplete( );
+        $scope.taxonInitialized = true;
+      });
     } else {
       // this will remove the autocomlete image since there's no taxon
       $scope.updateTaxonAutocomplete( );
@@ -269,17 +210,10 @@ function( ObservationsFactory, PlacesFactory, TaxaFactory, shared, $scope, $root
     }
   };
   $scope.initializePlaceParams = function( ) {
-    $scope.params.place_id = $scope.params["place_id[]"] || $scope.params.place_id;
-    if( _.isString( $scope.params.place_id ) ) {
-      $scope.params.place_id = _.filter( $scope.params.place_id.split(","), _.identity );
-    }
-    if( _.isArray( $scope.params.place_id ) && $scope.params.place_id.length === 1 ) {
-      $scope.params.place_id = $scope.params.place_id[0];
-    }
-    if( $scope.params.place_id && !_.isArray( $scope.params.place_id ) ) {
+    if( $scope.params.place_id ) {
       $scope.params.place_id = parseInt( $scope.params.place_id );
     }
-    if( $scope.params.place_id && !_.isArray( $scope.params.place_id ) ) {
+    if( $scope.params.place_id ) {
       // load place name and polygon from ID
       PlacesFactory.show( $scope.params.place_id ).then( function( response ) {
         places = PlacesFactory.responseToInstances( response );
@@ -311,14 +245,6 @@ function( ObservationsFactory, PlacesFactory, TaxaFactory, shared, $scope, $root
   // set params from the URL and lookup any Taxon or Place selections
   $scope.setInitialParams = function( ) {
     var initialParams = _.extend( { }, $scope.defaultParams, $location.search( ) );
-    if( initialParams.verifiable === "true" ) {
-      initialParams.verifiable = true;
-    }
-    // turning the key taxon_ids[] into taxon_ids
-    if( initialParams["taxon_ids[]"] ) {
-      initialParams.taxon_ids = initialParams["taxon_ids[]"];
-      delete initialParams["taxon_ids[]"];
-    }
     // setting _iconic_taxa for the iconic taxa filters, (e.g { Chromista: true })
     if( initialParams.iconic_taxa ) {
       initialParams._iconic_taxa = _.object( _.map( initialParams.iconic_taxa.split(","),
@@ -328,9 +254,6 @@ function( ObservationsFactory, PlacesFactory, TaxaFactory, shared, $scope, $root
     // set the default user or site place_id
     if( PREFERRED_PLACE && !ObservationsFactory.hasSpatialParams( initialParams ) ) {
       initialParams.place_id = PREFERRED_PLACE.id;
-    }
-    if( PREFERRED_SUBVIEW && !initialParams.subview ) {
-      $scope.currentSubview = PREFERRED_SUBVIEW;
     }
     // use the current user's id as the basis for the `reviewed` param
     if( !_.isUndefined( initialParams.reviewed ) && !initialParams.reviewed_by && CURRENT_USER ) {
@@ -399,17 +322,15 @@ function( ObservationsFactory, PlacesFactory, TaxaFactory, shared, $scope, $root
         createdDateType: $scope.params.createdDateType
       });
       // prepare current settings to store in browser state history
-      currentState = { params: stateParams,
-        selectedPlace: JSON.stringify( $scope.selectedPlace ),
-        selectedTaxon: JSON.stringify( $scope.selectedTaxon ),
+      currentState = { params: stateParams, selectedPlace: $scope.selectedPlace,
+        selectedTaxon: $scope.selectedTaxon,
         mapBounds: $scope.mapBounds ? $scope.mapBounds.toJSON( ) : null,
         mapBoundsIcon: $scope.mapBoundsIcon };
       currentSearch = urlParams;
     }
-
+    
     $scope.numFiltersSet = _.keys( currentSearch ).length
-    var skippableParams = [ 'view', 'subview', 'taxon_id', 'place_id',
-      'swlat', 'swlng', 'nelat', 'nelng', 'page' ];
+    var skippableParams = [ 'view', 'subview', 'taxon_id', 'place_id', 'swlat', 'swlng', 'nelat', 'nelng' ];
     for (var i = skippableParams.length - 1; i >= 0; i--) {
       if ( currentSearch[ skippableParams[i] ] ) {
         $scope.numFiltersSet -= 1;
@@ -444,9 +365,9 @@ function( ObservationsFactory, PlacesFactory, TaxaFactory, shared, $scope, $root
     if( newView != $scope.currentView || newSubview != $scope.currentSubview ) {
       $scope.currentView = newView;
       // note: subview is being preserved on view changes
-      if( newSubview ) {
-        $scope.currentSubview = newSubview;
-        updateSession({ prefers_observations_search_subview: newSubview });
+      if( newSubview ) { $scope.currentSubview = newSubview; }
+      if( $scope.observations && $scope.observations ) {
+        $scope.observations = $scope.observations.slice( 0, 40 );
       }
       $scope.updateBrowserLocation( options );
     }
@@ -469,87 +390,34 @@ function( ObservationsFactory, PlacesFactory, TaxaFactory, shared, $scope, $root
       if( reinitializeTaxon ) { $scope.initializeTaxonParams( ); }
     }, timeout);
   };
-  $scope.searchingStopped = function( ) {
-    if( !$scope.pagination ) { return false; }
-    return $scope.pagination.stopped && !$scope.pagination.searching;
-  };
-  $scope.noObservations = function( ) {
-    if( !$scope.searchingStopped( ) ) { return false; }
-    return $scope.observations.length == 0;
-  };
-  $scope.noTaxa = function( ) {
-    if( !$scope.searchingStopped( ) ) { return false; }
-    return $scope.taxa.length == 0;
-  };
-  $scope.noIdentifiers = function( ) {
-    if( !$scope.searchingStopped( ) ) { return false; }
-    return $scope.identifiers.length == 0;
-  };
-  $scope.noObservers = function( ) {
-    if( !$scope.searchingStopped( ) ) { return false; }
-    return $scope.observers.length == 0;
-  };
-  $scope.showPages = function( ) {
-    if( !$scope.searchingStopped( ) ) { return false; }
-    return $scope.pagination.total > $scope.pagination.perPage;
-  };
   $scope.searchAndUpdateStats = function( options ) {
     if( $scope.searchDisabled ) { return true; }
-    $scope.params.page = $scope.params.page || 1;
-    $scope.pagingInitialized = false;
-    $scope.pagination = $scope.pagination || { };
-    $scope.pagination.page = $scope.params.page;
-    $scope.pagination.section = 1;
-    $scope.pagination.maxSections = 4;
-    $scope.pagination.perSection = 24;
-    $scope.pagination.perPage = $scope.pagination.maxSections * $scope.pagination.perSection;
-    $scope.pagination.searching = true;
-    $scope.pagination.stopped = false;
-    // important to note we're not resetting scope.pagination.total to 0,
-    // as that would cause ui.bootstrap to jump back to page 1
+    $scope.pagination = { page: 1 };
     $scope.numberTaxaShown = 15;
     $scope.numberIdentifiersShown = 15;
     $scope.numberObserversShown = 15;
-    $scope.observersSort = "-observationCount";
+    $scope.observersSort = "observationCount";
     options = options || { };
     $scope.updateBrowserLocation( options );
-    $scope.observations = [ ];
-    $scope.taxa = [ ];
-    $scope.identifiers = [ ];
-    $scope.observers = [ ];
     $scope.resetStats( );
     var processedParams = ObservationsFactory.processParamsForAPI( _.extend( { },
-      $scope.params, iNaturalist.localeParams( ) ),
+      $scope.params, { page: $scope.pagination.page }, shared.localeParams( ) ),
       $scope.possibleFields);
     // recording there was some location in the search. That will be used
     // to hide the `Redo Search` button until the map moves
     if( processedParams.place_id || processedParams.swlat ) {
       $scope.hideRedoSearch = true;
     }
-    var statsParams = _.omit( processedParams, [ "order_by", "order", "page" ] );
-    var searchParams = _.extend( { }, processedParams, {
-      page: $scope.apiPage( ),
-      per_page: $scope.pagination.perSection });
     // prevent slow searches from overwriting current results
     var thisSearchTime = new Date( ).getTime( );
     $scope.lastSearchTime = thisSearchTime;
-    ObservationsFactory.search( searchParams ).
-                        then( function( response ) {
+    ObservationsFactory.search( processedParams ).then( function( response ) {
       if( $scope.lastSearchTime != thisSearchTime ) { return; }
-      $scope.pagination.searching = false;
       thisSearchTime = new Date( ).getTime( );
       $scope.lastSearchTime = thisSearchTime;
       $scope.totalObservations = response.data.total_results;
-      $scope.pagination.total = response.data.total_results;
-      if( $scope.pagination.total === 0 ) {
-        $scope.totalSpecies = 0;
-        $scope.totalIdentifiers = 0;
-        $scope.totalObservers = 0;
-        $scope.pagination.stopped = true;
-        return;
-      }
       $scope.observations = ObservationsFactory.responseToInstances( response );
-      ObservationsFactory.speciesCounts( statsParams ).then( function( response ) {
+      ObservationsFactory.speciesCounts( processedParams ).then( function( response ) {
         if( $scope.lastSearchTime != thisSearchTime ) { return; }
         $scope.totalSpecies = response.data.total_results;
         $scope.taxa = _.map( response.data.results, function( r ) {
@@ -558,7 +426,7 @@ function( ObservationsFactory, PlacesFactory, TaxaFactory, shared, $scope, $root
           return t;
         });
       });
-      ObservationsFactory.identifiers( statsParams ).then( function( response ) {
+      ObservationsFactory.identifiers( processedParams ).then( function( response ) {
         if( $scope.lastSearchTime != thisSearchTime ) { return; }
         $scope.totalIdentifiers = response.data.total_results;
         $scope.identifiers = _.map( response.data.results, function( r ) {
@@ -567,7 +435,7 @@ function( ObservationsFactory, PlacesFactory, TaxaFactory, shared, $scope, $root
           return u;
         });
       });
-      ObservationsFactory.observers( statsParams ).then( function( response ) {
+      ObservationsFactory.observers( processedParams ).then( function( response ) {
         if( $scope.lastSearchTime != thisSearchTime ) { return; }
         $scope.totalObservers = response.data.total_results;
         $scope.observers = _.map( response.data.results, function( r ) {
@@ -590,45 +458,25 @@ function( ObservationsFactory, PlacesFactory, TaxaFactory, shared, $scope, $root
   $scope.showMoreObservers = function( ) {
     $scope.numberObserversShown += 20;
   };
-  $scope.apiPage = function( ) {
-    return ( ( $scope.pagination.page - 1 ) * $scope.pagination.maxSections ) + $scope.pagination.section;
-  };
   $scope.showMoreObservations = function( ) {
     $scope.pagination = $scope.pagination || { };
     if( !$scope.pagination.page ) { return; }
     if( !$scope.observations ) { return; }
     if( $scope.pagination.searching === true ) { return; }
-    if( $scope.pagination.stopped === true ) { return; }
-    $scope.pagination.section += 1;
+    if( $scope.pagination.finished === true ) { return; }
+    $scope.pagination.page += 1;
     $scope.pagination.searching = true;
     var processedParams = ObservationsFactory.processParamsForAPI(
-      _.extend( { }, $scope.params, iNaturalist.localeParams( ),
-        { page: $scope.apiPage( ), per_page: $scope.pagination.perSection } ), $scope.possibleFields);
+      _.extend( { }, $scope.params, { page: $scope.pagination.page } ), $scope.possibleFields);
     ObservationsFactory.search( processedParams ).then( function( response ) {
-      if( ( response.data.total_results <= ( response.data.page * response.data.per_page ) ) ||
-          ( $scope.pagination.section >= $scope.pagination.maxSections ) ) {
-        $scope.pagination.stopped = true;
+      if( response.data.total_results <= ( response.data.page * response.data.per_page ) ) {
+        $scope.pagination.finished = true;
       }
       $scope.observations = $scope.observations.concat(
         ObservationsFactory.responseToInstances( response ));
       $scope.pagination.searching = false;
     });
   };
-  $scope.$watch( "pagination.page", function( ) {
-    if( !$scope.pagingInitialized ) {
-      $scope.pagingInitialized = true;
-      return;
-    }
-    // if( !$scope.pagination ) { return; }
-    $anchorScroll( );
-    $scope.skipParamChange = true;
-    $scope.params.page = $scope.pagination.page;
-    $scope.updateBrowserLocation( );
-    $scope.observations = [ ];
-    $scope.pagination.section = 0;
-    $scope.pagination.stopped = false;
-    $scope.showMoreObservations( );
-  });
   $scope.matchUrlState = function( ) {
     var urlParams = $location.search( );
     if( $scope.params.view && _.contains( $scope.possibleViews, $scope.params.view ) ) {
@@ -640,7 +488,7 @@ function( ObservationsFactory, PlacesFactory, TaxaFactory, shared, $scope, $root
     }
     if ( urlParams.on ) {
       $scope.params.dateType = 'exact';
-    } else if ( urlParams.d1 || urlParams.d2 ) {
+    } else if ( urlParams.d1 ) {
       $scope.params.dateType = 'range';
     } else if ( urlParams.month ) {
       $scope.params.dateType = 'month';
@@ -668,7 +516,6 @@ function( ObservationsFactory, PlacesFactory, TaxaFactory, shared, $scope, $root
     $rootScope.$emit( "hideNearbyPlace" );
     $scope.selectedPlace = place;
     $scope.removeSelectedBounds( );
-    $scope.updatePlaceAutocomplete( );
   };
   $scope.filterByBounds = function( ) {
     $rootScope.$emit( "hideNearbyPlace" );
@@ -723,7 +570,6 @@ function( ObservationsFactory, PlacesFactory, TaxaFactory, shared, $scope, $root
       if( !$( "#filter-container" ).is( e.target ) &&
           $( "#filter-container" ).has( e.target ).length === 0 &&
           $( ".open" ).has( e.target ).length === 0 &&
-          $( e.target ).parents('.ui-autocomplete').length === 0 &&
           $( e.target ).parents('.ui-datepicker').length === 0 &&
           $( e.target ).parents('.ui-datepicker-header').length === 0 &&
           $( e.target ).parents('.ui-multiselect-menu').length === 0 &&
@@ -865,9 +711,9 @@ function( ObservationsFactory, PlacesFactory, TaxaFactory, shared, $scope, $root
       resetOnChange: false,
       bootstrapClear: true,
       search_external: false,
-      id_el: $( "#filters input[name='taxon_id']" ),
+      taxon_id_el: $( "#filters input[name='taxon_id']" ),
       afterSelect: function( result ) {
-        $scope.selectedTaxon = result.item;
+        $scope.selectedTaxon = new iNatModels.Taxon( result.item );
         $scope.params.taxon_id = result.item.id;
         $scope.searchAndUpdateStats( );
       },
@@ -882,97 +728,16 @@ function( ObservationsFactory, PlacesFactory, TaxaFactory, shared, $scope, $root
   };
   $scope.updateTaxonAutocomplete = function( ) {
     if( $scope.selectedTaxon ) {
-      $( "input[name='taxon_name']" ).trigger( "assignSelection", $scope.selectedTaxon );
+      var t = new iNatModels.Taxon( $scope.selectedTaxon );
+      $( "input[name='taxon_name']" ).trigger( "assignTaxon", t );
     } else {
       $( "#filters input[name='taxon_name']" ).trigger( "search" );
-    }
-  };
-  $scope.setupInatPlaceAutocomplete = function( ) {
-    $( "input[name='inat_place_name']" ).placeAutocomplete({
-      resetOnChange: false,
-      bootstrapClear: true,
-      id_el: $( "#filters input[name='place_id']" ),
-      afterSelect: function( result ) {
-        $scope.filterByPlace( result.item );
-        if(!$scope.$$phase) { $scope.$digest( ); }
-      },
-      afterUnselect: function( ) {
-        $scope.removeSelectedPlace( );
-        if(!$scope.$$phase) { $scope.$digest( ); }
-      }
-    });
-  };
-  $scope.updatePlaceAutocomplete = function( ) {
-    if( $scope.selectedPlace ) {
-      $scope.selectedPlace.title = $scope.selectedPlace.display_name;
-      $( "input[name='inat_place_name']" ).
-        trigger( "assignSelection", $scope.selectedPlace );
-    } else {
-      $( "#filters input[name='inat_place_name']" ).trigger( "search" );
-    }
-  };
-  $scope.setupUserAutocomplete = function( ) {
-    $( "input[name='user_name']" ).userAutocomplete({
-      resetOnChange: false,
-      bootstrapClear: true,
-      id_el: $( "#filters input[name='user_id']" ),
-      afterSelect: function( result ) {
-        $scope.params.user_id = result.item.login;
-        if(!$scope.$$phase) { $scope.$digest( ); }
-      },
-      afterUnselect: function( ) {
-        $scope.params.user_id = null;
-        if(!$scope.$$phase) { $scope.$digest( ); }
-      }
-    });
-    $scope.updateUserAutocomplete( );
-  };
-  $scope.updateUserAutocomplete = function( ) {
-    if( $scope.params.user_id ) {
-      $( "input[name='user_name']" ).
-        trigger( "assignSelection",
-          { id: $scope.params.user_id, title: $scope.params.user_id } );
-    } else {
-      $( "#filters input[name='user_name']" ).trigger( "search" );
-    }
-  };
-  $scope.setupProjectAutocomplete = function( ) {
-    $( "input[name='project_name']" ).projectAutocomplete({
-      resetOnChange: false,
-      bootstrapClear: true,
-      id_el: $( "#filters input[name='project_id']" ),
-      afterSelect: function( result ) {
-        $scope.params.project_id = result.item.slug;
-        if(!$scope.$$phase) { $scope.$digest( ); }
-      },
-      afterUnselect: function( ) {
-        $scope.params.project_id = null;
-        if(!$scope.$$phase) { $scope.$digest( ); }
-      }
-    });
-    $scope.updateProjectAutocomplete( );
-  };
-  $scope.updateProjectAutocomplete = function( ) {
-    if( $scope.params.project_id ) {
-      $( "input[name='project_name']" ).
-        trigger( "assignSelection",
-          { id: $scope.params.project_id, title: $scope.params.project_id } );
-    } else {
-      $( "#filters input[name='project_name']" ).trigger( "search" );
     }
   };
   $scope.setupBrowserStateBehavior = function( ) {
     window.onpopstate = function( event ) {
       var state = _.extend( { }, event.state || $scope.initialBrowserState );
       var previousParams = _.extend( { }, $scope.defaultParams, state.params );
-      // needed to serialize some objects for storing in browser state
-      // so now turn them back into object instances for comparison
-      if( state.selectedTaxon ) {
-        state.selectedTaxon = new iNatModels.Taxon( JSON.parse( state.selectedTaxon ) );
-      }
-      if( state.selectedPlace ) {
-        state.selectedPlace = new iNatModels.Place( JSON.parse( state.selectedPlace ) );
-      }
       // we could set place and taxon below, and that should not run searches
       $scope.searchDisabled = true;
       $scope.mapBoundsIcon = state.mapBoundsIcon;
@@ -1035,6 +800,7 @@ function( ObservationsFactory, PlacesFactory, TaxaFactory, shared, $scope, $root
     }
     delete urlParams._iconic_taxa;
     delete urlParams.project_id;
+    delete urlParams.page;
     delete urlParams.order;
     delete urlParams.order_by;
     delete urlParams.dateType;
@@ -1058,19 +824,13 @@ function( ObservationsFactory, PlacesFactory, TaxaFactory, shared, $scope, $root
       $scope.params.user_id = CURRENT_USER.login;
     }
   };
-  $scope.canShowObservationFields = function( ) {
-    return ($scope.params.observationFields && _.size( $scope.params.observationFields ) > 0);
-  }
   $scope.setObservationFields = function( ) {
     var urlParams = $location.search( );
     // Put the URL params that correspond to observation fields in their own part of the scope
     // If there's a more readable way to perform this simple task, please let me know.
     $scope.params.observationFields = _.reduce( urlParams, function( memo, v, k ) {
       if( k.match(/(\w+):(\w+)/ ) ) {
-        // true represents a key with no value, so leave value undefined
-        k = decodeURIComponent(k).replace( /(%20|\+)/g, " ");
-        if( _.isString( v ) ) { v = v.replace( /(%20|\+)/g, " "); }
-        memo[k] = ( v === true ) ? undefined : v;
+        memo[k] = v;
       }
       return memo;
     }, { } );
@@ -1085,7 +845,9 @@ function( ObservationsFactory, PlacesFactory, TaxaFactory, shared, $scope, $root
     delete $scope.params.observationFields[ field ];
     return false;
   };
-
+  $scope.canShowObservationFields = function( ) {
+    return ($scope.params.observationFields && !_.isEmpty( $scope.params.observationFields ))
+  };
   $scope.preInitialize( );
 }]);
 
@@ -1108,10 +870,9 @@ function( ObservationsFactory, PlacesFactory, shared, $scope, $rootScope ) {
   });
   $scope.setupMap = function( ) {
     if( $scope.map ) { return; }
-    var defaultMapType = PREFERRED_MAP_TYPE || google.maps.MapTypeId.LIGHT;
     $( "#map" ).taxonMap({
       urlCoords: true,
-      mapType: defaultMapType,
+      mapType: google.maps.MapTypeId.ROADMAP,
       showAllLayer: false,
       disableFullscreen: true,
       mapTypeControl: false,
@@ -1123,19 +884,7 @@ function( ObservationsFactory, PlacesFactory, shared, $scope, $rootScope ) {
     $scope.map = $( "#map" ).data( "taxonMap" );
     $scope.map.mapTypes.set(iNaturalist.Map.MapTypes.LIGHT_NO_LABELS, iNaturalist.Map.MapTypes.light_no_labels);
     $scope.map.mapTypes.set(iNaturalist.Map.MapTypes.LIGHT, iNaturalist.Map.MapTypes.light);
-    // preparing the mapType, Labels, and Terrain buttons initial state
-    // which can change depending on the user session/preferences
-    if( defaultMapType == google.maps.MapTypeId.SATELLITE ||
-        defaultMapType == google.maps.MapTypeId.HYBRID ) {
-      $scope.$parent.mapType = "satellite";
-    }
-    if( defaultMapType == iNaturalist.Map.MapTypes.LIGHT_NO_LABELS ||
-        defaultMapType == google.maps.MapTypeId.SATELLITE ) {
-      $scope.$parent.mapLabels = false;
-    }
-    if( defaultMapType == google.maps.MapTypeId.TERRAIN ) {
-      $scope.$parent.mapTerrain = true;
-    }
+    $scope.map.setMapTypeId(iNaturalist.Map.MapTypes.LIGHT);
     // waiting a bit after creating the map to initialize the layers
     // to avoid issues with map aligning, letting the browser catch up
     setTimeout( function( ) {
@@ -1252,7 +1001,6 @@ function( ObservationsFactory, PlacesFactory, shared, $scope, $rootScope ) {
       mapTypeId = mapLabels ? google.maps.MapTypeId.HYBRID : google.maps.MapTypeId.SATELLITE;
     }
     $scope.map.setMapTypeId(mapTypeId);
-    updateSession({ prefers_observations_search_map_type: mapTypeId });
   });
   $scope.lastMoveTime = 0;
   $scope.delayedOnMove = function( ) {
@@ -1340,7 +1088,7 @@ function( ObservationsFactory, PlacesFactory, shared, $scope, $rootScope ) {
       I18n.t( "loading" ) + "</div>", options );
     var time = new Date( ).getTime( );
     $scope.infoWindowCallbackStartTime =  time;
-    ObservationsFactory.show( observation_id, iNaturalist.localeParams( ) ).then( function( response ) {
+    ObservationsFactory.show( observation_id ).then( function( response ) {
       observations = ObservationsFactory.responseToInstances( response );
       if( observations.length > 0 ) {
         $scope.infoWindowObservation = observations[ 0 ];
@@ -1359,12 +1107,9 @@ function( ObservationsFactory, PlacesFactory, shared, $scope, $rootScope ) {
     if( !$scope.$parent.parametersInitialized ) { return };
     window.inatTaxonMap.removeObservationLayers( $scope.map, { title: "Observations" } );
     var layerParams = ObservationsFactory.processParamsForAPI( $scope.params, $scope.possibleFields );
-    if( _.isEqual( $scope.$parent.defaultProcessedParams, layerParams ) ) {
-      layerParams.ttl = 86400;
-    }
     window.inatTaxonMap.addObservationLayers( $scope.map, {
       title: "Observations",
-      mapStyle: "colored_heatmap",
+      mapStyle: _.isEqual( $scope.$parent.defaultProcessedParams, layerParams ) ? "summary" : "colored_heatmap",
       observationLayers: [ layerParams ],
       infoWindowCallback: $scope.infoWindowCallback
     });

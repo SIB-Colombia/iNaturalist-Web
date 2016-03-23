@@ -7,7 +7,7 @@
     var GUIDE_TAXON = #{json_escape @guide_taxon.to_json(:methods => [:eol_page_id]).html_safe},
         EOL_PAGE_ID = GUIDE_TAXON.eol_page_id ? GUIDE_TAXON.eol_page_id : ''
   = javascript_include_tag 'guide_taxa/edit'
-
+%p.current-file views/guide_taxa/_form.html.haml
 = form_for(@guide_taxon) do |f|
   = f.hidden_field :guide_id
   = error_messages_for @guide_taxon

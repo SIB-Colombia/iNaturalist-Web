@@ -19,9 +19,7 @@ class Place < ActiveRecord::Base
   has_many :place_taxon_names, :dependent => :delete_all, :inverse_of => :place
   has_many :taxon_names, :through => :place_taxon_names
   has_many :users, :inverse_of => :place, :dependent => :nullify
-  # do not destroy observations_places. That will happen
-  # in update_observations_places, from a callback in place_geometry
-  has_many :observations_places
+  has_many :observations_places, :dependent => :delete_all
   has_one :place_geometry, :dependent => :destroy
   has_one :place_geometry_without_geom, -> { select(PlaceGeometry.column_names - ['geom']) }, :class_name => 'PlaceGeometry'
   
@@ -169,13 +167,11 @@ class Place < ActiveRecord::Base
     scope type.pluralize.underscore.to_sym, -> { where("place_type = ?", code) }
   end
 
-  CONTINENT_LEVEL = -1
   COUNTRY_LEVEL = 0
   STATE_LEVEL = 1
   COUNTY_LEVEL = 2
   TOWN_LEVEL = 3
-  PARK_LEVEL = 10
-  ADMIN_LEVELS = [CONTINENT_LEVEL, COUNTRY_LEVEL, STATE_LEVEL, COUNTY_LEVEL, TOWN_LEVEL, PARK_LEVEL]
+  ADMIN_LEVELS = [COUNTRY_LEVEL, STATE_LEVEL, COUNTY_LEVEL, TOWN_LEVEL]
 
   scope :dbsearch, lambda {|q| where("name LIKE ?", "%#{q}%")}
   
@@ -352,10 +348,9 @@ class Place < ActiveRecord::Base
   
   def editable_by?(user)
     return false if user.blank?
-    return true if user.is_admin?
-    return true if user.is_curator? && admin_level.nil?
+    return true if user.is_curator?
     return true if self.user_id == user.id
-    return false if !admin_level.nil? && !user.is_admin?
+    return false if [COUNTRY_LEVEL, STATE_LEVEL, COUNTY_LEVEL].include?(admin_level)
     false
   end
   
@@ -395,9 +390,6 @@ class Place < ActiveRecord::Base
       end
     end
     
-    if options[:user].is_a?(User)
-      place.user_id = options[:user].id
-    end
     place.save
     place
   end
@@ -728,15 +720,10 @@ class Place < ActiveRecord::Base
     self.name = temp_name
     
     # Move the mergee's listed_taxa to the target's default check list
-    mergee.check_lists.each do |cl|
-      cl.update_attributes( place: self )
-      ListedTaxon.where( list_id: cl ).update_all( place_id: self )
-    end
+    additional_taxon_ids = mergee.taxon_ids - self.taxon_ids
     if check_list
-      ListedTaxon.where( list_id: mergee.check_list_id ).update_all( list_id: check_list_id, place_id: id )
-    elsif mergee.check_list.listed_taxa.count > 0
-      mergee.check_list.update_attributes( place_id: id, title: "MERGED #{mergee.check_list.title}")
-      ListedTaxon.where( list_id: mergee.check_list_id ).update_all( place_id: id )
+      ListedTaxon.where(["place_id = ? AND taxon_id in (?)", mergee, additional_taxon_ids]).
+        update_all(place_id: self, list_id: self.check_list.id)
     end
     
     # Keep reject geometry if keeper doesn't have one
@@ -933,20 +920,6 @@ class Place < ActiveRecord::Base
         Place.where(id: places)
       end
     end
-  end
-
-  def self.update_observations_places(place_id)
-    return if place_id.blank?
-    start_time = Time.now
-    # observations from existing denormalized records
-    ids = Observation.joins(:observations_places).
-      where("observations_places.place_id = ?", place_id).pluck(:id)
-    Observation.update_observations_places(ids: ids)
-    Observation.elastic_index!(ids: ids)
-    # observations not touched above that are in this place
-    ids = Observation.in_place(place_id).where("last_indexed_at < ?", start_time).pluck(:id)
-    Observation.update_observations_places(ids: ids)
-    Observation.elastic_index!(ids: ids)
   end
 
 end

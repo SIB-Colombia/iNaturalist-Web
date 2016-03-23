@@ -693,7 +693,7 @@ module ApplicationHelper
     if options[:observation_layers]
       options[:observation_layers].each do |layer|
         if observations = layer[:observations]
-          layer[:observation_id] = observations.compact.map(&:id).join(",")
+          layer[:observation_id] = observations.map(&:id).join(",")
           layer.delete(:observations)
         end
       end
@@ -816,97 +816,66 @@ module ApplicationHelper
   end
   
   def rights(record, options = {})
-    options[:separator] ||= "<br/>"
-    s = if record.is_a? Observation
-      rights_for_observation( record, options )
+    separator = options[:separator] || "<br/>"
+    if record.is_a? Observation
+      user_name = record.user.name
+      user_name = record.user.login if user_name.blank?
+      s = "&copy; #{user_name}"
+      if record.license.blank?
+        s += "#{separator}#{t(:all_rights_reserved)}"
+      else
+        s += separator
+        s += content_tag(:span) do
+          c = if options[:skip_image]
+            ""
+          else
+            link_to(image_tag("#{record.license}_small.png"), url_for_license(record.license)) + " "
+          end
+          c + link_to(t(:some_rights_reserved), url_for_license(record.license))
+        end
+      end
     elsif record.is_a?(Photo) || record.is_a?(Sound)
-      rights_for_media( record, options )
-    elsif record.respond_to?(:attribution)
-      record.attribution
+      user_name = ""
+      user_name = record.native_realname if user_name.blank?
+      user_name = record.native_username if user_name.blank?
+      user_name = record.user.try(:name) if user_name.blank?
+      user_name = record.user.try(:login) if user_name.blank?
+      user_name = t(:unknown) if user_name.blank?
+      s = if record.copyrighted? || record.creative_commons?
+        "&copy; #{user_name}"
+      else
+        t('copyright.no_known_copyright_restrictions', :name => user_name, :license_name => t(:public_domain))
+      end
+
+      if record.copyrighted?
+        s += "#{separator}#{t(:all_rights_reserved)}"
+      elsif record.creative_commons?
+        s += separator
+        code = Photo.license_code_for_number(record.license)
+        url = url_for_license(code)
+        s += content_tag(:span) do
+          c = if options[:skip_image]
+            ""
+          else
+            link_to(image_tag("#{code}_small.png"), url) + " "
+          end
+          c.html_safe + link_to(t(:some_rights_reserved), url)
+        end
+      end
+    else
+      s = record.attribution if record.respond_to?(:attribution)
+      s ||= "&copy; #{user_name}"
     end
-    s ||= "&copy; #{user_name}"
     content_tag(:span, s.html_safe, :class => "rights verticalmiddle")
-  end
-
-  def rights_for_observation( record, options = {} )
-    user_name = record.user.name
-    user_name = record.user.login if user_name.blank?
-    s = if record.license == Observation::CC0
-      I18n.t(:by_user, user: user_name)
-    else
-      "&copy; #{user_name}"
-    end
-    if record.license.blank?
-      s += "#{options[:separator]}#{I18n.t(:all_rights_reserved)}"
-    else
-      s += options[:separator]
-      s += content_tag(:span) do
-        c = if options[:skip_image]
-          ""
-        else
-          link_to(image_tag("#{record.license}_small.png"), url_for_license(record.license)) + " "
-        end
-        if record.license == Observation::CC0
-          c + link_to(I18n.t('copyright.no_rights_reserved'), url_for_license(record.license))
-        else
-          c + link_to(I18n.t(:some_rights_reserved), url_for_license(record.license))
-        end
-      end
-    end
-    s
-  end
-
-  def rights_for_media( record, options = {} )
-    user_name = ""
-    user_name = record.native_realname if user_name.blank?
-    user_name = record.native_username if user_name.blank?
-    user_name = record.user.try(:name) if user_name.blank?
-    user_name = record.user.try(:login) if user_name.blank?
-    user_name = I18n.t(:unknown) if user_name.blank?
-    s = if record.copyrighted?
-      "&copy; #{user_name}"
-    elsif record.license_code == Observation::CC0
-      I18n.t(:by_user, user: user_name)
-    else
-      I18n.t('copyright.no_known_copyright_restrictions', name: user_name, license_name: I18n.t(:public_domain))
-    end
-
-    if record.all_rights_reserved?
-      s += "#{options[:separator]}#{I18n.t(:all_rights_reserved)}"
-    elsif record.creative_commons?
-      s += options[:separator]
-      code = Photo.license_code_for_number(record.license)
-      url = url_for_license(code)
-      s += content_tag(:span) do
-        c = if options[:skip_image]
-          ""
-        else
-          link_to(image_tag("#{code}_small.png"), url) + " "
-        end
-        license_blurb = if record.license_code == Observation::CC0
-          I18n.t("copyright.no_rights_reserved")
-        else
-          I18n.t(:some_rights_reserved)
-        end
-        c.html_safe + link_to(license_blurb, url)
-      end
-    end
-    s
   end
   
   def url_for_license(code)
     return nil if code.blank?
     if info = Photo::LICENSE_INFO.detect{|k,v| v[:code] == code}.try(:last)
       info[:url]
-    elsif code == Observation::CC0
-      "https://creativecommons.org/publicdomain/zero/#{Shared::LicenseModule::CC0_VERSION}/"
     elsif code =~ /CC\-/
-      "http://creativecommons.org/licenses/#{code[/CC\-(.+)/, 1].downcase}/#{Shared::LicenseModule::CC_VERSION}/"
+      "http://creativecommons.org/licenses/#{code[/CC\-(.+)/, 1].downcase}/3.0/"
     end
-  end
-
-  def license_name( license )
-    Shared::LicenseModule.license_name_for_code( license )
   end
   
   def update_image_for(update, options = {})
@@ -929,14 +898,7 @@ module ApplicationHelper
     when "ListedTaxon"
       image_tag("checklist-icon-color-32px.png", options)
     when "Post"
-      case resource.parent_type
-      when "User"
-        image_tag(resource.user.icon.url(:thumb), options.merge(:class => "usericon"))
-      when "Project"
-        image_tag(resource.parent.icon.url(:thumb), options.merge(:class => "projecticon"))
-      else
-        image_tag(resource.parent.logo_square.url, options.merge(:class => "siteicon"))
-      end
+      image_tag(resource.user.icon.url(:thumb), options.merge(:class => "usericon"))
     when "Place"
       image_tag(FakeView.image_url("icon-maps.png"), options)
     when "Taxon"
@@ -1043,7 +1005,7 @@ module ApplicationHelper
         else
           link_to(project.title, url_for_resource_with_host(project))
         end
-        if update.notification == Update::YOUR_OBSERVATIONS_ADDED
+        if update.notification = Update::YOUR_OBSERVATIONS_ADDED
           t(:project_curators_added_some_of_your_observations_html, url: project_url(resource), project: project.title)
         else
           t(:curators_changed_for_x_html, :x => title)
@@ -1183,8 +1145,6 @@ module ApplicationHelper
       else ""
       end
       content_tag(:div, ofv.value.gsub(/\s/, ''), :class => css_class)
-    elsif ofv.observation_field.datatype == ObservationField::TEXT
-      formatted_user_text( ofv.value, skip_simple_format: true )
     else
       ofv.value
     end
@@ -1300,46 +1260,9 @@ module ApplicationHelper
   def flexible_post_path(post, options = {})
     return trip_path(post, options) if post.is_a?(Trip)
     if post.parent_type == "User"
-      journal_post_path(post.user.login, post, options)
-    elsif post.parent_type == "Project"
-      project_journal_post_path(post.parent.slug, post, options)
+      journal_post_path(post.user.login, post)
     else
-      site_post_path(post, options)
-    end
-  end
-
-  def flexible_post_url(post, options = {})
-    return trip_url(post, options) if post.is_a?(Trip)
-    if post.parent_type == "User"
-      journal_post_url(post.user.login, post, options)
-    elsif post.parent_type == "Project"
-      project_journal_post_url(post.parent.slug, post, options)
-    else
-      site_post_url(post, options)
-    end
-  end
-
-  def post_parent_path( parent, options = {} )
-    parent_slug = @parent_slug || parent.try_methods( :login, :slug )
-    case parent.class.name
-    when "Project"
-      project_journal_path( options.merge( project_id: parent_slug ) )
-    when "User"
-      journal_by_login_path( options.merge( login: parent_slug ) )
-    else
-      site_posts_path( options )
-    end
-  end
-
-  def post_archives_by_month_path( parent, year, month )
-    parent_slug = @parent_slug || parent.try_methods( :login, :slug )
-    case parent.class.name
-    when "Project"
-      project_journal_archives_by_month_path( parent_slug, year, month )
-    when "User"
-      journal_archives_by_month_path( parent_slug, year, month )
-    else
-      archives_by_month_site_posts_path( year, month )
+      project_journal_post_path(post.parent.slug, post)
     end
   end
 
@@ -1347,8 +1270,6 @@ module ApplicationHelper
     return edit_trip_path(post, options) if post.is_a?(Trip)
     if post.parent_type == "User"
       edit_journal_post_path(post.user.login, post)
-    elsif post.parent_type == "Site"
-      edit_site_post_path(post)
     else
       edit_project_journal_post_path(post.parent.slug, post)
     end
@@ -1387,20 +1308,9 @@ module ApplicationHelper
   def hyperlink_mentions(text)
     linked_text = text.dup
     linked_text.mentioned_users.each do |u|
-
-      linked_text.gsub!(/(\B)@#{ u.login }/, "\\1#{link_to("@#{ u.login }", person_by_login_url(u.login))}")
+      linked_text.gsub!(/(^|\s|>)@#{ u.login }/, "\\1#{link_to("@#{ u.login }", person_by_login_url(u.login))}")
     end
     linked_text
-  end
-
-  def shareable_description( text )
-    return "" if text.blank?
-    truncate(
-      strip_tags(
-        text.gsub(/\s+/m, ' ')
-      ).strip, 
-      length: 1000
-    ).strip
   end
 
 end

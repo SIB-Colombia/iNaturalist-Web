@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="15px" height="15px" viewBox="0 0 15 15" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:sketch="http://www.bohemiancoding.com/sketch/ns">
+    <!-- Generator: Sketch 3.4 (15575) - http://www.bohemiancoding.com/sketch -->
+    <title>ico-mag-check</title>
+    <desc>Created with Sketch.</desc>
+    <defs>
+        <path id="path-1" d="M0,0.999 L15,0.999 L15,16 L0,16"></path>
+        <path id="path-3" d="M0,0.999 L15,0.999 L15,16 L0,16"></path>
+    </defs>
+    <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" sketch:type="MSPage">
+        <g id="ico-mag-check" sketch:type="MSLayerGroup" transform="translate(0.000000, -1.000000)">
+            <g id="Group-3">
+                <mask id="mask-2" sketch:name="Clip 2" fill="white">
+                    <use xlink:href="#path-1"></use>
+                </mask>
+                <g id="Clip-2"></g>
+                <path d="M14.6046,13.6884 L11.9266,11.0174 C11.9136,11.0034 11.8976,10.9934 11.8836,10.9844 C11.6426,11.3544 11.3556,11.7054 11.0306,12.0304 C10.7066,12.3544 10.3536,12.6424 9.9806,12.8834 C9.9936,12.8974 10.0036,12.9134 10.0166,12.9274 L12.6886,15.6044 C13.2176,16.1324 14.0766,16.1314 14.6036,15.6044 C15.1316,15.0764 15.1316,14.2174 14.6046,13.6884" id="Fill-1" fill="#FEFEFE" sketch:type="MSShapeGroup" mask="url(#mask-2)"></path>
+            </g>
+            <g id="Group-6">
+                <mask id="mask-4" sketch:name="Clip 5" fill="white">
+                    <use xlink:href="#path-3"></use>
+                </mask>
+                <g id="Clip-5"></g>
+                <path d="M2.3805,11.0945 C0.2535,8.9675 0.2545,5.5045 2.3815,3.3805 C4.5085,1.2535 7.9685,1.2535 10.0945,3.3795 C12.2205,5.5045 12.2195,8.9635 10.0945,11.0935 C7.9685,13.2135 4.5085,13.2215 2.3805,11.0945 M10.6495,2.8235 C8.2165,0.3915 4.2595,0.3915 1.8265,2.8235 C-0.6085,5.2555 -0.6085,9.2155 1.8245,11.6485 C4.2585,14.0805 8.2165,14.0805 10.6495,11.6485 C13.0815,9.2155 13.0815,5.2555 10.6495,2.8235" id="Fill-4" fill="#FEFEFE" sketch:type="MSShapeGroup" mask="url(#mask-4)"></path>
+            </g>
+            <path d="M6.2034,10.1994 L3.3274,8.0404 L3.8914,7.2894 L5.8934,8.7914 L8.3194,4.2724 L9.1474,4.7164 L6.2034,10.1994 Z" id="Fill-7" fill="#FEFEFE" sketch:type="MSShapeGroup"></path>
+        </g>
+    </g>
+</svg>

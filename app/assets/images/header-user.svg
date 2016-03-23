@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg width="30px" height="30px" viewBox="0 0 30 30" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:sketch="http://www.bohemiancoding.com/sketch/ns">
+    <!-- Generator: Sketch 3.4 (15575) - http://www.bohemiancoding.com/sketch -->
+    <title>header-user</title>
+    <desc>Created with Sketch.</desc>
+    <defs>
+        <path id="path-1" d="M0,0 L30,0 L30,30 L0,30"></path>
+    </defs>
+    <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" sketch:type="MSPage">
+        <g id="header-user" sketch:type="MSLayerGroup">
+            <g id="Group-3">
+                <mask id="mask-2" sketch:name="Clip 2" fill="white">
+                    <use xlink:href="#path-1"></use>
+                </mask>
+                <g id="Clip-2"></g>
+                <path d="M30.0001,15 C30.0001,6.716 23.2841,0 15.0001,0 C6.7161,0 0.0001,6.716 0.0001,15 C0.0001,23.284 6.7161,30 15.0001,30 C23.2841,30 30.0001,23.284 30.0001,15" id="Fill-1" fill="#FEFEFE" sketch:type="MSShapeGroup" mask="url(#mask-2)"></path>
+            </g>
+            <path d="M22.1684,17.4415 C21.0524,15.9815 19.6124,15.2275 17.1774,14.9845 C16.7384,14.8965 16.4074,14.5075 16.4074,14.0445 C16.4074,13.7065 17.4934,12.6935 17.4854,12.6855 C18.6054,11.5265 19.2074,9.6435 19.2074,8.1955 C19.2074,5.9465 17.3974,4.1215 15.1634,4.1215 C12.9304,4.1215 11.1204,5.9465 11.1204,8.1955 C11.1204,9.6515 11.7054,11.5465 12.8374,12.7055 C12.8374,12.7055 13.9184,13.7065 13.9184,14.0445 C13.9184,14.5335 13.5504,14.9425 13.0724,14.9995 C10.6884,15.2505 9.2634,16.0015 8.1594,17.4415 C7.8394,17.8575 7.6654,18.6925 7.6544,19.1395 C7.6574,19.2555 7.6544,21.0655 7.6544,21.0655 C7.6544,21.9165 8.3434,22.6055 9.1944,22.6055 L21.1324,22.6055 C21.9834,22.6055 22.6734,21.9165 22.6734,21.0655 C22.6734,21.0655 22.6694,19.2555 22.6734,19.1395 C22.6614,18.6925 22.4884,17.8575 22.1684,17.4415" id="Fill-4" fill="#405760" sketch:type="MSShapeGroup"></path>
+        </g>
+    </g>
+</svg>

@@ -6,7 +6,3 @@ iNatModels.User = function( attrs ) {
     that[ attr ] = value;
   });
 };
-
-iNatModels.User.default_thumbnail = function( ) {
-  return "/attachment_defaults/users/icons/defaults/thumb.png";
-};

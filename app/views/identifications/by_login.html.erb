@@ -32,43 +32,58 @@
 <![endif]-->
 <% end %>
 
-<%= render :partial => "shared/by_login_header" %>
+<!-- views/identifications/by_login -->
 
-<div id="identifications" class="column span-18">
-  <% if @identifications.empty? -%>
-    <div id="no_content" class="readable description">
-      <% if logged_in? && @selected_user.id == current_user.id %>
-        <%= t 'no_identifications_added.current_user' %>
-      <% else %>
-        <%= t 'no_identifications_added.user', user: @login.to_s %>
-      <% end %>
-    </div>
-  <% end -%>
-  <% for identification in @identifications %>
-    <div class="row column span-18">
-      <%= render :partial => 'identification_with_observation', :object => identification %>
-    </div>
-  <% end %>
-  
-  <%= will_paginate @identifications, :renderer => INatLinkRenderer %>
-</div>
+<div class="row">
+  <div class="col-sm-12">
+    <div class="content-block">
+      <h3><%= t(:ids) %></h3>
+      <div class="row">
+        <div class="col-sm-12">
+          
+          <%-#= render :partial => "shared/by_login_header" %>
 
-<div class="last column span-6">
-  <div class="box">
-    <h3><%=t :stats %></h3>
-    <ul>
-      <li>
-        <span class="count"><%= @identifications.total_entries %></span>
-        <label><%=t :ids_made_for_others %></label>
-      </li>
-      <% if @helpful_id_count -%>
-        <li>
-          <span class="count">
-            <%= number_to_percentage(@helpful_id_count * 1.0 / @identifications.total_entries, :precision => 0) %>
-          </span>
-          <label><%=t :helped_the_observer_make %></label>
-        </li>
-      <% end -%>
-    </ul>
+          <div id="identifications" class="column span-18">
+            <% if @identifications.empty? -%>
+              <div id="no_content" class="readable description">
+                <% if logged_in? && @selected_user.id == current_user.id %>
+                  <%= t 'no_identifications_added.current_user' %>
+                <% else %>
+                  <%= t 'no_identifications_added.user', user: @login.to_s %>
+                <% end %>
+              </div>
+            <% end -%>
+            <% for identification in @identifications %>
+              <div class="row column span-18">
+                <%= render :partial => 'identification_with_observation', :object => identification %>
+              </div>
+            <% end %>
+
+            <%= will_paginate @identifications, :renderer => INatLinkRenderer %>
+          </div>
+
+          <div class="last column span-6">
+            <div class="box">
+              <h3><%=t :stats %></h3>
+              <ul>
+                <li>
+                  <span class="count"><%= @identifications.total_entries %></span>
+                  <label><%=t :ids_made_for_others %></label>
+                </li>
+                <% if @helpful_id_count -%>
+                  <li>
+                    <span class="count">
+                      <%= number_to_percentage(@helpful_id_count * 1.0 / @identifications.total_entries, :precision => 0) %>
+                    </span>
+                    <label><%=t :helped_the_observer_make %></label>
+                  </li>
+                <% end -%>
+              </ul>
+            </div>
+          </div>
+          
+        </div>
+      </div>
+    </div>
   </div>
 </div>

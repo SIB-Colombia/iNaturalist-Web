@@ -65,12 +65,11 @@ class Observation < ActiveRecord::Base
       id: id,
       created_at: created,
       created_at_details: ElasticModel.date_details(created),
-      created_time_zone: timezone_object.blank? ? "UTC" : timezone_object.tzinfo.name,
       updated_at: updated_at.in_time_zone(timezone_object || "UTC"),
-      observed_on: datetime.blank? ? nil : datetime.to_date,
+      observed_on: datetime,
       observed_on_details: ElasticModel.date_details(datetime),
       time_observed_at: time_observed_at_in_zone,
-      observed_time_zone: timezone_object.blank? ? nil : timezone_object.tzinfo.name,
+      time_zone: time_zone,
       time_zone_offset: timezone_offset,
       site_id: site_id,
       uri: uri,
@@ -117,7 +116,6 @@ class Observation < ActiveRecord::Base
       identifications_count: num_identifications_by_others,
       comments: comments.map(&:as_indexed_json),
       comments_count: comments.size,
-      obscured: coordinates_obscured? || geoprivacy_obscured?,
       location: (latitude && longitude) ?
         ElasticModel.point_latlon(latitude, longitude) : nil,
       private_location: (private_latitude && private_longitude) ?
@@ -194,8 +192,6 @@ class Observation < ActiveRecord::Base
     current_user = options[:current_user] || params[:viewer]
     p = params[:_query_params_set] ? params : query_params(params)
     return nil unless Observation.able_to_use_elasticsearch?(p)
-    # one of the param initializing steps saw an impossible condition
-    return nil if p[:empty_set]
     p = site_search_params(options[:site], p)
     search_wheres = { }
     complex_wheres = [ ]
@@ -236,10 +232,10 @@ class Observation < ActiveRecord::Base
       { http_param: :month, es_field: "observed_on_details.month" },
       { http_param: :year, es_field: "observed_on_details.year" },
       { http_param: :week, es_field: "observed_on_details.week" },
-      { http_param: :place_id, es_field: "place_ids" },
+      { http_param: :place, es_field: "place_ids" },
       { http_param: :site_id, es_field: "site_id" }
     ].each do |filter|
-      unless p[ filter[:http_param] ].blank? || p[ filter[:http_param] ] == "any"
+      unless p[ filter[:http_param] ].blank?
         search_filters << { terms: { filter[:es_field] =>
           [ p[ filter[:http_param] ] ].flatten.map{ |v|
             ElasticModel.id_or_object(v) } } }
@@ -254,6 +250,7 @@ class Observation < ActiveRecord::Base
       { http_param: :id_please, es_field: "id_please" },
       { http_param: :out_of_range, es_field: "out_of_range" },
       { http_param: :mappable, es_field: "mappable" },
+      { http_param: :verifiable, es_field: "verifiable" },
       { http_param: :captive, es_field: "captive" }
     ].each do |filter|
       if p[ filter[:http_param] ].yesish?
@@ -275,13 +272,6 @@ class Observation < ActiveRecord::Base
       elsif p[ filter[:http_param] ].noish?
         search_filters << { not: f }
       end
-    end
-    if p[:verifiable].yesish?
-      search_filters << { terms: {
-        quality_grade: [ "research", "needs_id" ] } }
-    elsif p[:verifiable].noish?
-      search_filters << { not: { terms: {
-        quality_grade: [ "research", "needs_id" ] } } }
     end
     # include the taxon plus all of its descendants.
     # Every taxon has its own ID in ancestor_ids
@@ -408,26 +398,20 @@ class Observation < ActiveRecord::Base
     end
 
     if p[:d1] || p[:d2]
-      d1 = DateTime.parse(p[:d1]) rescue DateTime.parse("1800-01-01")
-      d2 = DateTime.parse(p[:d2]) rescue Time.now
-      d2 = Time.now if d2 && d2 > Time.now
-      query_by_date = (
-        (p[:d1] && d1.to_s =~ /00:00:00/ && p[:d1] !~ /00:00:00/) ||
-        (p[:d2] && d2.to_s =~ /00:00:00/ && p[:d2] !~ /00:00:00/))
-      date_filter = { "observed_on_details.date": {
-        gte: d1.strftime("%F"),
-        lte: d2.strftime("%F") }}
-      if query_by_date
-        search_filters << { range: date_filter }
-      else
-        time_filter = { time_observed_at: {
-          gte: d1.strftime("%FT%T%:z"),
-          lte: d2.strftime("%FT%T%:z") } }
-        search_filters << { or: [
-          { and: [ { range: time_filter }, { exists: { field: "time_observed_at" } } ] },
-          { and: [ { range: date_filter }, { missing: { field: "time_observed_at" } } ] }
-        ] }
-      end
+      p[:d2] = Time.now if p[:d2] && p[:d2] > Time.now
+      search_filters << { bool: { should: [
+        { bool: { must: [
+          { range: { observed_on: {
+            gte: p[:d1] || Time.new("1800"), lte: p[:d2] || Time.now } } },
+          { exists: { field: "time_observed_at" } }
+        ] } },
+        { bool: { must: [
+          { range: { observed_on: {
+            gte: (p[:d1] || Time.new("1800")).to_date.to_s + "||/d",
+            lte: (p[:d2] || Time.now).to_date.to_s + "||/d" } } },
+          { missing: { field: "time_observed_at" } }
+        ] } }
+      ] }}
     end
     if p[:h1] && p[:h2]
       p[:h1] = p[:h1].to_i % 24
@@ -517,7 +501,7 @@ class Observation < ActiveRecord::Base
       { cached_votes_total: sort_order }
     when "id"
       { id: sort_order }
-    else
+    else "observations.id"
       { created_at: sort_order }
     end
 
@@ -564,12 +548,12 @@ class Observation < ActiveRecord::Base
         } } }
       }
     }
-    if params[:place_id]
+    if params[:place]
       # if a place condition is specified, return all results
       # from the place(s) specified, or where place is NULL
       status_condition[:nested][:query][:filtered][:filter] = { bool: { should: [
         { terms: { "taxon.statuses.place_id" =>
-          [ params[:place_id] ].flatten.map{ |v| ElasticModel.id_or_object(v) } } },
+          [ params[:place] ].flatten.map{ |v| ElasticModel.id_or_object(v) } } },
         { missing: { field: "taxon.statuses.place_id" } }
       ] } }
     else

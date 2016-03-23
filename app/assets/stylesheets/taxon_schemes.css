@@ -10,14 +10,12 @@ ul.change_taxon {
 .inactive {color: #777;}
 
 .scheme_taxon .taxon {
-  font-family: Georgia, serif;
   font-size: 140%;
   line-height: 1.2;
   margin-bottom: 5px;
   display:block;
 }
 .change_taxon .taxon {
-  font-family: Georgia, serif;
   font-size: 140%;
   line-height: 1.2;
   margin-bottom: 5px;

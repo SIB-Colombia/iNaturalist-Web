@@ -68,15 +68,13 @@ class FlickrPhoto < Photo
     options[:license] ||= fp.license if fp.respond_to?(:license)
     
     # Set sizes
-    # fp could be an OpenStruct or a FlickRaw::Response
-    h = (fp.to_hash || fp.to_h).symbolize_keys
-    if h[:url_sq]
-      options[:square_url]   ||= h[:url_sq]
-      options[:thumb_url]    ||= h[:url_t]
-      options[:small_url]    ||= h[:url_s]
-      options[:medium_url]   ||= h[:url_m]
-      options[:large_url]    ||= h[:url_l]
-      options[:original_url] ||= h[:url_o]
+    if fp.respond_to?(:url_sq)
+      options[:square_url]   ||= fp.to_hash["url_sq"]
+      options[:thumb_url]    ||= fp.to_hash["url_t"]
+      options[:small_url]    ||= fp.to_hash["url_s"]
+      options[:medium_url]   ||= fp.to_hash["url_m"]
+      options[:large_url]    ||= fp.to_hash["url_l"]
+      options[:original_url] ||= fp.to_hash["url_o"]
     end
     
     if options[:square_url].blank? && options.delete(:skip_sizes)

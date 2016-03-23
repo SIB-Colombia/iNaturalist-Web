@@ -7,18 +7,15 @@ class Emailer < ActionMailer::Base
   default :from =>     "#{CONFIG.site_name} <#{CONFIG.noreply_email}>",
           :reply_to => CONFIG.noreply_email
   
-  def invite_user(address, params, user) 
+  def invite(address, params, user) 
     Invite.create(:user => user, :invite_address => address)
     @user = user
     @subject = "#{subject_prefix} #{params[:sender_name]} wants you to join them on #{CONFIG.site_name}" 
     @personal_message = params[:personal_message]
-    set_locale
     @sending_user = params[:sender_name]
-    mail(set_site_specific_opts.merge(
-      :to => address,
-      :subject => @subject
-    ))
-    reset_locale
+    mail(set_site_specific_opts.merge(:to => address)) do |format|
+      format.text
+    end
   end
   
   def project_invitation_notification(project_invitation)
@@ -122,21 +119,6 @@ class Emailer < ActionMailer::Base
     reset_locale
   end
 
-  def user_updates_suspended(user)
-    return if user.blank?
-    @user = user
-    set_locale
-    return if @user.email.blank?
-    return if @user.prefers_no_email?
-    return if @user.suspended?
-    @site_name = site_name
-    mail(set_site_specific_opts.merge(
-      to: @user.email,
-      subject: t(:updates_suspension_email_subject, prefix: subject_prefix)
-    ))
-    reset_locale
-  end
-
   # Send the user an email saying the bulk observation import encountered
   # an error.
   def bulk_observation_error(user, filename, error_details)
@@ -180,14 +162,6 @@ class Emailer < ActionMailer::Base
       "[#{site.name}]"
     else
       "[#{CONFIG.site_name}]"
-    end
-  end
-
-  def site_name
-    if site = @user.site
-      site.name
-    else
-      CONFIG.site_name
     end
   end
 

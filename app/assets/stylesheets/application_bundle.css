@@ -5,6 +5,7 @@
 *= require jquery/plugins/jquery.multiselect
 *= require jquery/plugins/jquery.autocomplete
 *= require fontastic-icons
+*= require bootstrap_bundle
 *= require index
 *= require observations
 *= require autocomplete
