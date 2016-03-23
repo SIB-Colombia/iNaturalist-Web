@@ -3,7 +3,7 @@ class UsersController < ApplicationController
   before_action :doorkeeper_authorize!, :only => [ :create, :update, :edit, :dashboard, :new_updates ], :if => lambda { authenticate_with_oauth? }
   before_filter :authenticate_user!, 
     :unless => lambda { authenticated_with_oauth? },
-    :except => [:index, :show, :new, :create, :activate, :relationships, :search]
+    :except => [ :index, :show, :new, :create, :activate, :relationships, :search, :update_session ]
   load_only = [ :suspend, :unsuspend, :destroy, :purge,
     :show, :update, :relationships, :add_role, :remove_role, :set_spammer ]
   before_filter :find_user, :only => load_only
@@ -19,7 +19,10 @@ class UsersController < ApplicationController
   MOBILIZED = [:show, :dashboard, :new, :create]
   before_filter :unmobilized, :except => MOBILIZED
   before_filter :mobilized, :only => MOBILIZED
-  
+
+  protect_from_forgery unless: -> {
+    request.parameters[:action] == "search" && request.format.json? }
+
   caches_action :dashboard,
     :expires_in => 1.hour,
     :cache_path => Proc.new {|c|
@@ -253,16 +256,28 @@ class UsersController < ApplicationController
     else
       scope = scope.order("login")
     end
-    @users = scope.page(params[:page])
+    params[:per_page] = params[:per_page] || 30
+    params[:per_page] = 30 if params[:per_page].to_i > 30
+    params[:per_page] = 1 if params[:per_page].to_i < 1
+    params[:page] = params[:page] || 1
+    params[:page] = 1 if params[:page].to_i < 1
+    offset = (params[:page].to_i - 1) * params[:per_page].to_i
     respond_to do |format|
-      format.html { counts_for_users }
+      format.html {
+        # will_paginate collection will have total_entries
+        @users = scope.paginate(page: params[:page], per_page: params[:per_page])
+        counts_for_users
+      }
       format.json do
+        # use .limit.offset to avoid a slow count(), since count isn't used
+        @users = scope.limit(params[:per_page]).offset(offset)
         haml_pretty do
           @users.each_with_index do |user, i|
             @users[i].html = view_context.render_in_format(:html, :partial => "users/chooser", :object => user).gsub(/\n/, '')
           end
         end
-        render :json => @users.to_json(User.default_json_options.merge(:methods => [:html]))
+        render :json => @users.to_json(User.default_json_options.merge(:methods => [:html])),
+          callback: params[:callback]
       end
     end
   end
@@ -482,7 +497,8 @@ class UsersController < ApplicationController
   def update_session
     allowed_patterns = [
       /^show_quality_metrics$/,
-      /^user-seen-ann*/
+      /^user-seen-ann*/,
+      /^prefers_*/
     ]
     updates = params.select {|k,v|
       allowed_patterns.detect{|p| 
@@ -493,6 +509,9 @@ class UsersController < ApplicationController
       v = true if v.yesish?
       v = false if v.noish?
       session[k] = v
+      if k =~ /^prefers_/ && logged_in? && current_user.respond_to?(k)
+        current_user.update_attributes(k => v)
+      end
     end
     render :head => :no_content, :layout => false, :text => nil
   end
